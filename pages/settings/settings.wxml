@@ -81,5 +81,31 @@
           </view>
       </view>
     </view>
+
+    <!-- 时间设置区域 -->
+    <view class="settings-section">
+      <view class="section-title">
+        <view class="section-icon">
+          <view class="time-icon">
+            <view class="sun"></view>
+            <view class="moon"></view>
+          </view>
+        </view>
+        <text class="section-text">时间设置</text>
+      </view>
+
+      <!-- 日夜切换 -->
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">{{isDay ? '白天' : '晚上'}}</text>
+        </view>
+        <switch 
+          class="item-switch" 
+          color="#f4a261" 
+          checked="{{isDay}}" 
+          bindchange="toggleDayNight" 
+        />
+      </view>
+    </view>
   </view>
 </view>

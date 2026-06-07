@@ -47,12 +47,14 @@ Page({
       this.buildingCooldown = false;
     }, 2000); // 2秒冷却期
 
-    // 从状态管理中恢复之前保存的位置，如果没有保存则使用初始位置
+    // 从状态管理中恢复之前保存的位置和状态
     const state = gameStore.getState();
     this.player = { x: state.player.x || PLAYER.SPAWN_X, y: state.player.y || PLAYER.SPAWN_Y };
     this.playerDir = state.player.direction || 'down';
     // 恢复之前是否在触发区域的状态
     this.isInTriggerZone = state.player.inTriggerZone || false;
+    // 恢复日夜状态
+    this.isDay = state.isDay;
 
     this.unsubscribe = gameStore.subscribe(this.handleStateChange.bind(this));
   },
@@ -60,6 +62,7 @@ Page({
   handleStateChange(state) {
     this.player = { x: state.player.x, y: state.player.y };
     this.playerDir = state.player.direction;
+    this.isDay = state.isDay;
   },
 
   onReady() {
@@ -317,7 +320,10 @@ Page({
     if (!ctx) return;
     const dpr = this.sysInfo.pixelRatio;
 
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // 根据日夜状态设置背景颜色
+    ctx.fillStyle = this.isDay ? '#ffffff' : '#000000';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
     ctx.save();
     ctx.scale(dpr, dpr);
 

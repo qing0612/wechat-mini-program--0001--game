@@ -12,7 +12,8 @@ class GameStore {
         inTriggerZone: false
       },
       isRunning: false,
-      currentBuilding: null
+      currentBuilding: null,
+      isDay: true // 白天/晚上状态，默认白天
     };
     this.listeners = [];
   }
@@ -63,6 +64,10 @@ class GameStore {
 
   stopGame() {
     this.setState({ isRunning: false });
+  }
+
+  setIsDay(isDay) {
+    this.setState({ isDay });
   }
 
   resetPlayer() {

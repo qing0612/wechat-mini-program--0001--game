@@ -1,4 +1,5 @@
 const audioManager = require('../../utils/audioManager.js');
+const gameStore = require('../../store/gameStore.js');
 
 Page({
   data: {
@@ -6,17 +7,21 @@ Page({
     startMusicEnabled: true,
     mapMusicEnabled: true,
     // 音量值 (0-1)
-    volume: 1
+    volume: 1,
+    // 日夜状态
+    isDay: true
   },
 
   onLoad() {
     // 初始化音频管理器
     audioManager.init();
     // 从音频管理器获取当前静音设置和音量（转换为0-100范围）
+    const state = gameStore.getState();
     this.setData({
       startMusicEnabled: audioManager.getMute('start'),
       mapMusicEnabled: audioManager.getMute('map'),
-      volume: audioManager.volume * 100
+      volume: audioManager.volume * 100,
+      isDay: state.isDay
     });
   },
 
@@ -41,6 +46,13 @@ Page({
     this.setData({ volume: sliderValue });
     // 转换为 0-1 范围后设置给音频管理器
     audioManager.setVolume(sliderValue / 100);
+  },
+
+  // 日夜切换
+  toggleDayNight(e) {
+    const isDay = e.detail.value;
+    this.setData({ isDay });
+    gameStore.setIsDay(isDay);
   },
 
   // 返回上一页
