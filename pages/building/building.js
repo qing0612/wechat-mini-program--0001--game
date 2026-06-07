@@ -1,16 +1,25 @@
-// c:\Users\yibohe\Desktop\小程序-代码\pages\building\building.js
 const buildingService = require('../../services/buildingService.js');
+const gameStore = require('../../store/gameStore.js');
 
 Page({
   data: {
-    building: { name: '', nameEn: '', interiorImage: '', historyText: '' },
-    imgError: false
+    building: { name: '', nameEn: '', interiorImage: '', historyText: '', badge: null },
+    imgError: false,
+    badgeEarned: false,
+    showBadgePopup: false
   },
 
   onLoad(options) {
     const id = options.id || 'library';
     const building = buildingService.getBuildingById(id) || buildingService.getAllBuildings()[0];
     this.setData({ building, imgError: false });
+
+    // 检查是否已获得该徽章
+    if (building.badge && !gameStore.hasBadge(building.badge.id)) {
+      // 获得徽章
+      gameStore.addToBackpack(building.badge);
+      this.setData({ badgeEarned: true, showBadgePopup: true });
+    }
   },
 
   onImgError() {
@@ -23,5 +32,9 @@ Page({
 
   onImgTap() {
     wx.navigateBack();
+  },
+
+  closeBadgePopup() {
+    this.setData({ showBadgePopup: false });
   }
 });

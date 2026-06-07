@@ -50,4 +50,16 @@
       <view class="bottom-deco">═══════════════════</view>
     </view>
   </view>
+
+  <!-- 徽章获得弹窗 -->
+  <view class="badge-popup" wx:if="{{showBadgePopup}}" bindtap="closeBadgePopup">
+    <view class="badge-content" catchtap="closeBadgePopup">
+      <view class="badge-icon" style="background-image: url({{building.badge.image}}); background-size: cover;"></view>
+      <text class="badge-title">获得徽章！</text>
+      <text class="badge-name">{{building.badge.name}}</text>
+      <text class="badge-desc">{{building.badge.description}}</text>
+      <view class="badge-close" bindtap="closeBadgePopup">确定</view>
+    </view>
+  </view>
+  
 </view>

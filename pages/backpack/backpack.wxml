@@ -21,7 +21,7 @@
         bindtap="selectItem"
         data-item-id="{{item.id}}">
         <view class="item-icon" wx:if="{{item}}">
-          <view class="item-image" style="background-color: {{item.color}};"></view>
+          <view class="item-image" style="{{item.image ? 'background-image: url(' + item.image + '); background-size: cover;' : 'background-color: ' + item.color + ';'}}"></view>
           <view class="item-count" wx:if="{{item.count > 1}}">{{item.count}}</view>
         </view>
         <view class="item-slot-empty" wx:else>
@@ -33,7 +33,7 @@
     <!-- 选中物品详情 -->
     <view class="item-detail" wx:if="{{selectedItem}}">
       <view class="detail-header">
-        <view class="detail-icon" style="background-color: {{selectedItem.color}};"></view>
+        <view class="detail-icon" style="{{selectedItem.image ? 'background-image: url(' + selectedItem.image + '); background-size: cover;' : 'background-color: ' + selectedItem.color + ';'}}"></view>
         <view class="detail-info">
           <text class="detail-name">{{selectedItem.name}}</text>
           <text class="detail-count">数量: {{selectedItem.count}}</text>

@@ -7,30 +7,21 @@ Page({
   },
 
   onLoad() {
-    // 初始化背包物品
-    this.initItems();
+    this.loadBackpack();
   },
 
-  initItems() {
-    // 模拟背包物品数据
-    const items = [
-      { id: 1, name: '钥匙', color: '#f4a261', count: 3, description: '可以打开某些门', canUse: true },
-      { id: 2, name: '药水', color: '#e91e63', count: 2, description: '恢复生命值', canUse: true },
-      { id: 3, name: '金币', color: '#ffeb3b', count: 50, description: '闪闪发光的金币', canUse: false },
-      { id: 4, name: '地图', color: '#2196f3', count: 1, description: '显示区域地图', canUse: true },
-      null, // 空槽位
-      null, // 空槽位
-      { id: 5, name: '食物', color: '#4caf50', count: 5, description: '恢复体力', canUse: true },
-      null, // 空槽位
-      null, // 空槽位
-      { id: 6, name: '宝石', color: '#9c27b0', count: 2, description: '珍贵的宝石', canUse: false },
-      null, // 空槽位
-      null, // 空槽位
-      null, // 空槽位
-      null, // 空槽位
-      null, // 空槽位
-      null // 空槽位
-    ];
+  onShow() {
+    this.loadBackpack();
+  },
+
+  // 加载背包数据
+  loadBackpack() {
+    const backpack = gameStore.getBackpack();
+    // 填充到16个槽位
+    const items = [...backpack];
+    while (items.length < 16) {
+      items.push(null);
+    }
     this.setData({ items });
   },
 
@@ -48,6 +39,16 @@ Page({
     if (!this.data.selectedItem) return;
     
     const item = this.data.selectedItem;
+    
+    // 徽章不能被使用
+    if (item.id && item.id.startsWith('badge_')) {
+      wx.showToast({
+        title: '徽章不能使用',
+        icon: 'none'
+      });
+      return;
+    }
+    
     wx.showToast({
       title: `使用了${item.name}`,
       icon: 'success'
@@ -61,8 +62,14 @@ Page({
       return i;
     });
 
-    // 如果数量为0，设为空
-    const newItems = items.map(i => i && i.count <= 0 ? null : i);
+    // 如果数量为0，设为空并从 gameStore 移除
+    const newItems = items.map(i => {
+      if (i && i.count <= 0) {
+        gameStore.removeFromBackpack(i.id);
+        return null;
+      }
+      return i;
+    });
     
     this.setData({ 
       items: newItems,
@@ -74,16 +81,26 @@ Page({
     if (!this.data.selectedItem) return;
     
     const item = this.data.selectedItem;
+    
+    // 徽章不能被丢弃
+    if (item.id && item.id.startsWith('badge_')) {
+      wx.showToast({
+        title: '徽章不能丢弃',
+        icon: 'none'
+      });
+      return;
+    }
+    
     wx.showModal({
       title: '确认丢弃',
       content: `确定要丢弃${item.name}吗？`,
       success: (res) => {
         if (res.confirm) {
-          const items = this.data.items.map(i => i && i.id === item.id ? null : i);
-          this.setData({ 
-            items,
-            selectedItem: null
-          });
+          // 从 gameStore 移除
+          gameStore.removeFromBackpack(item.id);
+          // 更新本地显示
+          this.loadBackpack();
+          this.setData({ selectedItem: null });
           wx.showToast({
             title: '已丢弃',
             icon: 'none'
