@@ -331,6 +331,11 @@ Page({
 
     if (this.mapLoaded && this.mapImg) {
       ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
+      // 夜间模式时添加半透明黑色遮罩
+      if (!this.isDay) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, this.viewW, this.viewH);
+      }
     } else {
       this.drawPlaceholderMap(ctx, cam);
     }
