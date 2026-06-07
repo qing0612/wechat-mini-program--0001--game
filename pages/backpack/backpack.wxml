@@ -21,7 +21,8 @@
         bindtap="selectItem"
         data-item-id="{{item.id}}">
         <view class="item-icon" wx:if="{{item}}">
-          <view class="item-image" style="{{item.image ? 'background-image: url(' + item.image + '); background-size: cover;' : 'background-color: ' + item.color + ';'}}"></view>
+          <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" class="item-image" />
+          <view wx:else class="item-image" style="background-color: {{item.color}};"></view>
           <view class="item-count" wx:if="{{item.count > 1}}">{{item.count}}</view>
         </view>
         <view class="item-slot-empty" wx:else>
