@@ -1,0 +1,66 @@
+<view class="map-page" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+  <!-- 游戏画布 -->
+  <canvas
+    type="2d"
+    id="gameCanvas"
+    class="game-canvas"
+  ></canvas>
+
+  <!-- 全屏浮动摇杆 -->
+  <view class="joystick-area" wx:if="{{joystickVisible}}"
+    style="left:{{joystickBaseX}}px;top:{{joystickBaseY}}px;">
+    <view class="joystick-base" style="width:{{joystickBaseR*2}}px;height:{{joystickBaseR*2}}px;">
+      <view class="joystick-stick"
+        style="transform: translate({{stickX}}px, {{stickY}}px);">
+      </view>
+    </view>
+  </view>
+
+  <!-- 左上角返回键 -->
+  <view class="back-float" bindtap="onBack">
+    <view class="back-arrow">
+      <view class="arrow-left"></view>
+    </view>
+  </view>
+
+  <!-- 设置按钮 -->
+  <view class="settings-btn" bindtap="goToSettings">
+    <view class="gear-container">
+      <view class="gear">
+        <view class="tooth t1"></view>
+        <view class="tooth t2"></view>
+        <view class="tooth t3"></view>
+        <view class="tooth t4"></view>
+        <view class="tooth t5"></view>
+        <view class="tooth t6"></view>
+        <view class="tooth t7"></view>
+        <view class="tooth t8"></view>
+        <view class="gear-body"></view>
+        <view class="center-hole"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置按钮 -->
+  <view class="settings-btn" bindtap="goToSettings">
+    <view class="gear-container">
+      <view class="gear">
+        <view class="tooth t1"></view>
+        <view class="tooth t2"></view>
+        <view class="tooth t3"></view>
+        <view class="tooth t4"></view>
+        <view class="tooth t5"></view>
+        <view class="tooth t6"></view>
+        <view class="tooth t7"></view>
+        <view class="tooth t8"></view>
+        <view class="gear-body"></view>
+        <view class="center-hole"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 左下角坐标显示 -->
+  <view class="coord-display">
+    <text class="coord-text">X:{{coordX}}  Y:{{coordY}}</text>
+  </view>
+</view>

@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/start/start",
+    "pages/map/map",
+    "pages/building/building",
+    "pages/settings/settings"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#1a1a2e",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarTitleText": "河北师范大学",
+    "navigationBarTextStyle": "white",
+    "pageOrientation": "landscape",
+    "launchImagePath": "/images/start-bg.png"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,53 @@
+<view class="building-page">
+  <!-- 全屏背景图 -->
+  <image
+    class="bg-image"
+    src="{{building.interiorImage}}"
+    mode="aspectFill"
+    wx:if="{{!imgError}}"
+    binderror="onImgError"
+  />
+  <!-- 【修复7】图片加载失败时的像素风占位图 -->
+  <view class="bg-placeholder" wx:if="{{imgError}}">
+    <view class="placeholder-frame">
+      <view class="placeholder-icon-wrap">
+        <view class="pixel-building-icon">
+          <view class="icon-roof"></view>
+          <view class="icon-body"></view>
+          <view class="icon-door"></view>
+        </view>
+      </view>
+      <text class="placeholder-text">{{building.name}}</text>
+      <text class="placeholder-sub">内部插画加载中...</text>
+      <text class="placeholder-hint">请将图片放至 {{building.interiorImage}}</text>
+    </view>
+  </view>
+
+  <!-- 内容叠层 -->
+  <view class="content-overlay">
+    <!-- 上三分之一：返回键 + 建筑名 -->
+    <view class="header-area">
+      <view class="nav-bar">
+        <view class="back-btn" bindtap="onBack">
+          <text class="back-arrow">←</text>
+          <text class="back-text">返回校园</text>
+        </view>
+      </view>
+      <view class="title-group">
+        <text class="building-name">{{building.name}}</text>
+        <text class="building-name-en">{{building.nameEn}}</text>
+      </view>
+    </view>
+
+    <!-- 下三分之二：历史文案 -->
+    <view class="history-area">
+      <scroll-view scroll-y class="history-scroll">
+        <view class="history-card">
+          <text class="section-title">◆ 建筑历史 ◆</text>
+          <text class="history-text">{{building.historyText}}</text>
+        </view>
+      </scroll-view>
+      <view class="bottom-deco">═══════════════════</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,17 @@
+/* 全局像素风基础样式 */
+
+page {
+  background: #0f0f1a;
+  color: #fff;
+  font-family: "Courier New", monospace, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+
+  transform: translateY(-10rpx);
+}
+
+.full-screen {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}

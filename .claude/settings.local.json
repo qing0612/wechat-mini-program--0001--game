@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /tmp/piccompress)",
+      "Bash(cp /c/Users/fangb/Desktop/小程序/images/map-bg.png /tmp/piccompress/map-bg.png)",
+      "Bash(cp /c/Users/fangb/Desktop/小程序/images/start-bg.png /tmp/piccompress/start-bg.png)",
+      "Bash(convert /tmp/piccompress/map-bg.png -quality 82 /tmp/piccompress/map-bg.jpg)",
+      "Bash(convert /tmp/piccompress/start-bg.png -quality 82 /tmp/piccompress/start-bg.jpg)",
+      "Bash(convert --version)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL OK'\\)\")",
+      "Bash(python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(pip install *)",
+      "Bash(pip show *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"print\\('hello'\\)\")",
+      "Bash(/d/Python312/python -c \"from PIL import Image; print\\('PIL OK'\\)\")",
+      "Bash(/d/Python312/python -c ' *)",
+      "Bash(mkdir -p ~/tmp_compress)",
+      "Bash(cp \"/c/Users/fangb/Desktop/小程序/images/map-bg.png\" ~/tmp_compress/map-bg.png)",
+      "Bash(cp \"/c/Users/fangb/Desktop/小程序/images/start-bg.png\" ~/tmp_compress/start-bg.png)",
+      "Read(//c/Users/fangb/**)"
+    ]
+  }
+}

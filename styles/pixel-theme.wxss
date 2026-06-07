@@ -1,0 +1,332 @@
+/* ===== 像素风UI主题 ===== */
+
+/* --- 调色板 --- */
+/*
+  bg-deep:    #0f0f1a  深黑蓝(背景)
+  bg-mid:     #1a1a2e  中黑蓝(卡片背景)
+  bg-light:   #2a2a4a  浅紫蓝(边框/分隔)
+  accent:     #f4a261  橙金色(主强调色)
+  accent-dk:  #c47820  深橙(按下态)
+  white:      #ffffff  白色(主文字)
+  text-mid:   #cccccc  中灰(次文字)
+  text-dim:   #888888  暗灰(辅助文字)
+  green:      #4ecdc4  青绿(成功/高亮)
+  red:        #e76f51  砖红(警告)
+  gold:       #ffe66d  亮金(特殊标记)
+*/
+
+/* --- 像素边框(用box-shadow模拟4方向像素切割) --- */
+.pixel-border {
+  border: 3rpx solid #f4a261;
+  box-shadow:
+    /* 外层像素框 */
+    6rpx 0 0 0 #f4a261,
+    -6rpx 0 0 0 #f4a261,
+    0 6rpx 0 0 #f4a261,
+    0 -6rpx 0 0 #f4a261,
+    /* 角点(像素补角) */
+    6rpx 6rpx 0 0 #f4a261,
+    -6rpx 6rpx 0 0 #f4a261,
+    6rpx -6rpx 0 0 #f4a261,
+    -6rpx -6rpx 0 0 #f4a261;
+}
+
+.pixel-border-thick {
+  border: 4rpx solid #f4a261;
+  box-shadow:
+    8rpx 0 0 0 #f4a261,
+    -8rpx 0 0 0 #f4a261,
+    0 8rpx 0 0 #f4a261,
+    0 -8rpx 0 0 #f4a261,
+    8rpx 8rpx 0 0 #f4a261,
+    -8rpx 8rpx 0 0 #f4a261,
+    8rpx -8rpx 0 0 #f4a261,
+    -8rpx -8rpx 0 0 #f4a261;
+}
+
+.pixel-border-subtle {
+  border: 2rpx solid #2a2a4a;
+  box-shadow:
+    4rpx 0 0 0 #2a2a4a,
+    -4rpx 0 0 0 #2a2a4a,
+    0 4rpx 0 0 #2a2a4a,
+    0 -4rpx 0 0 #2a2a4a,
+    4rpx 4rpx 0 0 #2a2a4a,
+    -4rpx 4rpx 0 0 #2a2a4a,
+    4rpx -4rpx 0 0 #2a2a4a,
+    -4rpx -4rpx 0 0 #2a2a4a;
+}
+
+/* --- 像素按钮 --- */
+.pixel-btn {
+  background: #f4a261;
+  color: #0f0f1a;
+  font-weight: 900;
+  font-size: 30rpx;
+  letter-spacing: 6rpx;
+  padding: 20rpx 48rpx;
+  border: 4rpx solid #0f0f1a;
+  text-align: center;
+  box-shadow:
+    /* 像素阴影(右下) */
+    6rpx 6rpx 0 0 #0f0f1a,
+    /* 内部高光(顶部) */
+    inset 0 4rpx 0 0 rgba(255,255,255,0.3),
+    inset 0 -4rpx 0 0 rgba(0,0,0,0.15);
+}
+
+.pixel-btn:active {
+  transform: translate(3rpx, 3rpx);
+  box-shadow:
+    3rpx 3rpx 0 0 #0f0f1a,
+    inset 0 4rpx 0 0 rgba(255,255,255,0.1),
+    inset 0 -2rpx 0 0 rgba(0,0,0,0.2);
+  background: #c47820;
+}
+
+/* 变体:小按钮 */
+.pixel-btn-sm {
+  background: #2a2a4a;
+  color: #f4a261;
+  font-weight: bold;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  padding: 12rpx 24rpx;
+  border: 3rpx solid #f4a261;
+  box-shadow: 4rpx 4rpx 0 0 #0f0f1a;
+}
+
+.pixel-btn-sm:active {
+  transform: translate(2rpx, 2rpx);
+  box-shadow: 2rpx 2rpx 0 0 #0f0f1a;
+}
+
+/* 变体:幽灵按钮 */
+.pixel-btn-ghost {
+  background: transparent;
+  color: #f4a261;
+  font-weight: bold;
+  font-size: 28rpx;
+  letter-spacing: 4rpx;
+  padding: 16rpx 40rpx;
+  border: 3rpx solid #f4a261;
+}
+
+.pixel-btn-ghost:active {
+  background: rgba(244,162,97,0.15);
+}
+
+/* --- 像素卡片 --- */
+.pixel-card {
+  background: #1a1a2e;
+  border: 3rpx solid #2a2a4a;
+  padding: 28rpx;
+  margin: 16rpx 24rpx;
+  box-shadow:
+    6rpx 0 0 0 #2a2a4a,
+    -6rpx 0 0 0 #2a2a4a,
+    0 6rpx 0 0 #2a2a4a,
+    0 -6rpx 0 0 #2a2a4a,
+    6rpx 6rpx 0 0 #2a2a4a,
+    -6rpx 6rpx 0 0 #2a2a4a,
+    6rpx -6rpx 0 0 #2a2a4a,
+    -6rpx -6rpx 0 0 #2a2a4a;
+}
+
+.pixel-card-accent {
+  background: #1a1a2e;
+  border: 3rpx solid #f4a261;
+  padding: 28rpx;
+  margin: 16rpx 24rpx;
+  box-shadow:
+    6rpx 0 0 0 #f4a261,
+    -6rpx 0 0 0 #f4a261,
+    0 6rpx 0 0 #f4a261,
+    0 -6rpx 0 0 #f4a261,
+    6rpx 6rpx 0 0 #f4a261,
+    -6rpx 6rpx 0 0 #f4a261,
+    6rpx -6rpx 0 0 #f4a261,
+    -6rpx -6rpx 0 0 #f4a261,
+    /* 内阴影 */
+    inset 0 0 20rpx rgba(244,162,97,0.05);
+}
+
+/* --- 像素标题 --- */
+.pixel-title {
+  color: #f4a261;
+  font-weight: 900;
+  letter-spacing: 8rpx;
+  /* 模拟像素文字的阴影效果 */
+  text-shadow:
+    2rpx 2rpx 0 #0f0f1a,
+    -2rpx -2rpx 0 #0f0f1a,
+    2rpx -2rpx 0 #0f0f1a,
+    -2rpx 2rpx 0 #0f0f1a;
+}
+
+.pixel-title-xl {
+  font-size: 56rpx;
+  color: #f4a261;
+  font-weight: 900;
+  letter-spacing: 10rpx;
+  text-shadow: 3rpx 3rpx 0 #0f0f1a;
+}
+
+.pixel-title-lg {
+  font-size: 40rpx;
+  color: #f4a261;
+  font-weight: 900;
+  letter-spacing: 6rpx;
+  text-shadow: 2rpx 2rpx 0 #0f0f1a;
+}
+
+.pixel-title-md {
+  font-size: 32rpx;
+  color: #f4a261;
+  font-weight: bold;
+  letter-spacing: 4rpx;
+}
+
+.pixel-subtitle {
+  font-size: 22rpx;
+  color: #888;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+}
+
+/* --- 像素分隔线 --- */
+.pixel-divider {
+  height: 4rpx;
+  background: repeating-linear-gradient(
+    90deg,
+    #f4a261 0, #f4a261 8rpx,
+    transparent 8rpx, transparent 16rpx
+  );
+  margin: 20rpx 0;
+}
+
+.pixel-divider-dots {
+  text-align: center;
+  color: #2a2a4a;
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  margin: 16rpx 0;
+}
+
+/* --- 像素徽章 --- */
+.pixel-badge {
+  display: inline-block;
+  background: #f4a261;
+  color: #0f0f1a;
+  font-size: 20rpx;
+  font-weight: bold;
+  padding: 4rpx 12rpx;
+  letter-spacing: 2rpx;
+}
+
+.pixel-badge-green {
+  background: #4ecdc4;
+  color: #0f0f1a;
+}
+
+.pixel-badge-red {
+  background: #e76f51;
+  color: #fff;
+}
+
+/* --- 像素输入框 --- */
+.pixel-input {
+  background: #0f0f1a;
+  border: 3rpx solid #2a2a4a;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 16rpx 20rpx;
+  box-shadow:
+    inset 2rpx 2rpx 0 0 rgba(0,0,0,0.3),
+    inset -2rpx -2rpx 0 0 rgba(255,255,255,0.05);
+}
+
+.pixel-input:focus {
+  border-color: #f4a261;
+}
+
+/* --- 像素导航栏 --- */
+.pixel-nav {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: #0f0f1a;
+  border-bottom: 4rpx solid #f4a261;
+  box-shadow: 0 4rpx 0 0 #2a2a4a;
+}
+
+.pixel-nav-back {
+  color: #f4a261;
+  font-size: 28rpx;
+  font-weight: bold;
+  padding: 8rpx 0;
+}
+
+/* --- 像素标签页 --- */
+.pixel-tab {
+  display: flex;
+  background: #0f0f1a;
+  border-bottom: 3rpx solid #2a2a4a;
+}
+
+.pixel-tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 26rpx;
+  color: #888;
+  font-weight: bold;
+  letter-spacing: 2rpx;
+  border-bottom: 4rpx solid transparent;
+}
+
+.pixel-tab-item.active {
+  color: #f4a261;
+  border-bottom-color: #f4a261;
+}
+
+/* --- 像素头像框 --- */
+.pixel-avatar-frame {
+  border: 4rpx solid #f4a261;
+  box-shadow:
+    6rpx 0 0 0 #f4a261,
+    -6rpx 0 0 0 #f4a261,
+    0 6rpx 0 0 #f4a261,
+    0 -6rpx 0 0 #f4a261,
+    6rpx 6rpx 0 0 #f4a261,
+    -6rpx 6rpx 0 0 #f4a261,
+    6rpx -6rpx 0 0 #f4a261,
+    -6rpx -6rpx 0 0 #f4a261;
+  overflow: hidden;
+}
+
+/* --- 全局像素风 --- */
+.pixel-text {
+  font-family: "Courier New", monospace, sans-serif;
+}
+
+.pixel-corner-tl::before,
+.pixel-corner-br::after {
+  content: '';
+  display: block;
+  width: 16rpx;
+  height: 16rpx;
+  background: #f4a261;
+}
+
+.pixel-corner-tl::before {
+  position: absolute;
+  top: -4rpx;
+  left: -4rpx;
+}
+
+.pixel-corner-br::after {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+}

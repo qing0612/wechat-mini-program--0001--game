@@ -1,0 +1,85 @@
+<view class="settings-page">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="back-btn" bindtap="goBack">
+      <view class="back-icon">
+        <view class="arrow"></view>
+      </view>
+    </view>
+    <text class="nav-title">设置</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 设置内容 -->
+  <view class="settings-content">
+    <!-- 音效设置区域 -->
+    <view class="settings-section">
+      <view class="section-title">
+        <view class="section-icon">
+          <view class="speaker-icon">
+            <view class="speaker"></view>
+            <view class="sound-wave">
+              <view class="wave wave1"></view>
+              <view class="wave wave2"></view>
+              <view class="wave wave3"></view>
+            </view>
+          </view>
+        </view>
+        <text class="section-text">音效设置</text>
+      </view>
+
+      <!-- 开始页面音乐开关 -->
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">开始页面音乐</text>
+        </view>
+        <switch 
+          class="item-switch" 
+          color="#f4a261" 
+          checked="{{startMusicEnabled}}" 
+          bindchange="toggleStartMusic" 
+        />
+      </view>
+
+      <!-- 地图页面音乐开关 -->
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">地图页面音乐</text>
+        </view>
+        <switch 
+          class="item-switch" 
+          color="#f4a261" 
+          checked="{{mapMusicEnabled}}" 
+          bindchange="toggleMapMusic" 
+        />
+      </view>
+
+      <!-- 音量调节 -->
+      <view class="setting-item volume-item">
+        <view class="item-label">
+          <view class="volume-icon">
+            <view class="volume-box">
+              <view class="volume-bar bar1"></view>
+              <view class="volume-bar bar2"></view>
+              <view class="volume-bar bar3"></view>
+            </view>
+          </view>
+          <text class="label-text">音量</text>
+        </view>
+        <view class="volume-control">
+            <text class="volume-label volume-min">0</text>
+            <slider 
+              class="volume-slider" 
+              activeColor="#f4a261" 
+              backgroundColor="rgba(244, 162, 97, 0.2)" 
+              block-size="24" 
+              value="{{volume}}" 
+              bindchange="onVolumeChange" 
+            />
+            <text class="volume-label volume-max">100</text>
+            <text class="volume-value">{{volume}}%</text>
+          </view>
+      </view>
+    </view>
+  </view>
+</view>

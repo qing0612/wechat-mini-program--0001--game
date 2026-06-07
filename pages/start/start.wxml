@@ -1,0 +1,49 @@
+<view class="start-page">
+  <!-- 全屏背景图 -->
+  <view class="bg-panel">
+    <image class="bg-image" src="/images/start-bg.png" mode="aspectFill" bindload="onImgLoad" binderror="onImgError" />
+    <view class="bg-placeholder" wx:if="{{!imgLoaded}}">
+      <view class="placeholder-icon"></view>
+      <view class="placeholder-text">images\start-bg.png</view>
+      <view class="placeholder-sub">请将图二保存为 images/start-bg.png</view>
+    </view>
+  </view>
+
+<!-- 设置按钮 -->
+<view class="settings-btn" bindtap="goToSettings">
+  <view class="gear-container">
+    <view class="gear">
+      <!-- 齿轮齿 -->
+      <view class="tooth t1"></view>
+      <view class="tooth t2"></view>
+      <view class="tooth t3"></view>
+      <view class="tooth t4"></view>
+      <view class="tooth t5"></view>
+      <view class="tooth t6"></view>
+      <view class="tooth t7"></view>
+      <view class="tooth t8"></view>
+      <!-- 齿轮内圈 -->
+      <view class="gear-body"></view>
+      <!-- 中心孔 -->
+      <view class="center-hole"></view>
+    </view>
+  </view>
+</view>
+
+  <!-- 叠加信息层 -->
+  <view class="info-overlay">
+    <view class="title-area">
+      <text class="title-cn">河北师范大学</text>
+      <text class="title-en">HEBEI NORMAL UNIVERSITY</text>
+    </view>
+    <view class="subtitle-area">
+      <text class="subtitle">像素校园漫游</text>
+    </view>
+    <view class="enter-btn" bindtap="onEnter">
+      <text class="btn-text">ENTER</text>
+    </view>
+    <view class="footer">
+      <text class="footer-text">探索你的大学之旅</text>
+    </view>
+  </view>
+</view>
