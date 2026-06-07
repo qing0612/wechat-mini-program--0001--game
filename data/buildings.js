@@ -3,9 +3,9 @@ const BUILDINGS = [
     id: 'library',
     name: '图书馆',
     nameEn: 'Library',
-    triggerZone: { x: 1170, y: 410, w: 120, h: 110 },
+    triggerZone: { x: 1190, y: 395, w: 120, h: 110 },
     // 碰撞区域（不可穿越的建筑实体），略大于触发区，覆盖建筑轮廓
-    collisionZone: { x: 1155, y: 395, w: 150, h: 140 },
+    collisionZone: { x: 1155, y: 400, w: 150, h: 140 },
     interiorImage: '/images/buildings/library.png',
     badge: { id: 'badge_library', name: '图书馆徽章', image: '/images/badges/library-badge.jpg', description: '探索图书馆获得的荣誉徽章' },
      historyText: '河北师范大学图书馆发端于1902年（顺天中学堂藏书室）和1906年（北洋女师范学堂图书部），历经百余年发展。\n\n' +
@@ -65,7 +65,7 @@ const BUILDINGS = [
     id: 'museum',
     name: '博物馆',
     nameEn: 'Museum',
-    triggerZone: { x: 1230, y: 510, w: 120, h: 110 },
+    triggerZone: { x: 1230, y: 520, w: 120, h: 110 },
     collisionZone: { x: 1215, y: 495, w: 150, h: 140 },
     interiorImage: '/images/buildings/museum.png',
     badge: { id: 'badge_museum', name: '博物馆徽章', image: '/images/badges/museum-badge.jpg', description: '探索博物馆获得的荣誉徽章' },

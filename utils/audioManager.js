@@ -118,6 +118,8 @@ class AudioManager {
     if (this.innerAudioContext) {
       this.innerAudioContext.stop();
     }
+
+    this.isPlaying = false;  // 添加这一行
   }
 
   // 设置音量

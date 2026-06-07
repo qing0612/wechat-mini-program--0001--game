@@ -293,6 +293,10 @@ Page({
 
     this.anim.tick(dt * 1000, this.moving);
 
+    if (this.moving && this.modalDismissed) {
+      this.modalDismissed = false;
+    }
+
     const bld = buildingService.checkBuildingTrigger(this.player.x, this.player.y);
 
     if (bld) {
@@ -326,6 +330,7 @@ Page({
       // 离开触发区域，重置标志
       this.isInTriggerZone = false;
       this.modalDismissed = false;
+      this.buildingCooldown = false;
     }
 
     if (this.frameCount % UI.UPDATE_INTERVAL === 0) {
