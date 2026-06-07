@@ -38,25 +38,22 @@ Page({
     this.canvasReady = false;
     this.resizeTimer = null;
     this._resizeHandler = null;
-    // 重置模态框状态（从建筑页面返回时）
+    // 重置模态框状态（从其他页面返回时）
     this.modalShowing = false;
     this.modalDismissed = false;
-    // 标记刚从建筑页面返回，避免立即重新触发
-    this.justReturnedFromBuilding = true;
-    // 标记刚从建筑页面返回，避免立即重新触发
-    this.justReturnedFromBuilding = true;
+    // 标记刚从其他页面返回，避免立即触发建筑对话框
+    this.justReturned = true;
     // 设置冷却期，防止立即重新触发建筑进入提示
     this.buildingCooldown = true;
     setTimeout(() => {
       this.buildingCooldown = false;
+      this.justReturned = false;
     }, 2000); // 2秒冷却期
 
-    // 强制使用配置文件中的初始位置（每次进入地图页都从初始位置开始）
-    this.player = { x: PLAYER.SPAWN_X, y: PLAYER.SPAWN_Y };
-    this.playerDir = 'down';
-    // 同步更新状态管理
-    gameStore.updatePlayerPos(this.player.x, this.player.y);
-    gameStore.updatePlayerDirection(this.playerDir);
+    // 从状态管理中恢复之前保存的位置，如果没有保存则使用初始位置
+    const state = gameStore.getState();
+    this.player = { x: state.player.x || PLAYER.SPAWN_X, y: state.player.y || PLAYER.SPAWN_Y };
+    this.playerDir = state.player.direction || 'down';
 
     this.unsubscribe = gameStore.subscribe(this.handleStateChange.bind(this));
   },
@@ -258,7 +255,8 @@ Page({
 
     if (bld) {
       // 只有从外部进入时才触发（isInTriggerZone 从 false 变为 true）
-      if (!this.isInTriggerZone && !this.modalShowing && !this.modalDismissed) {
+      // 并且不是刚从其他页面返回，以及不在冷却期内
+      if (!this.isInTriggerZone && !this.modalShowing && !this.modalDismissed && !this.justReturned && !this.buildingCooldown) {
         this.isInTriggerZone = true;
         this.modalShowing = true;
         this.moving = false;
