@@ -1,10 +1,13 @@
 // c:\Users\yibohe\Desktop\小程序-代码\store\gameStore.js
+const gameConfig = require('../config/gameConfig.js');
+
 class GameStore {
   constructor() {
+    const { PLAYER } = gameConfig;
     this.state = {
       player: {
-        x: 0,
-        y: 0,
+        x: PLAYER.SPAWN_X,
+        y: PLAYER.SPAWN_Y,
         direction: 'down',
         inTriggerZone: false
       },

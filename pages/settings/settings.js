@@ -43,20 +43,6 @@ Page({
     audioManager.setVolume(sliderValue / 100);
   },
 
-  // 音量变化处理
-  onVolumeChange(e) {
-    const volume = e.detail.value;
-    this.setData({ volume });
-    audioManager.setVolume(volume);
-  },
-
-  // 音量变化处理
-  onVolumeChange(e) {
-    const volume = e.detail.value;
-    this.setData({ volume });
-    audioManager.setVolume(volume);
-  },
-
   // 返回上一页
   goBack() {
     wx.navigateBack({

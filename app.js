@@ -1,8 +1,5 @@
 App({
-  globalData: {
-    playerPos: null,
-    playerDir: 'down'
-  },
+  globalData: {},
   onLaunch() {
     const sys = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     this.globalData.windowWidth = sys.windowWidth;

@@ -167,32 +167,6 @@ class AudioManager {
     return false;
   }
 
-  // 设置静音状态
-  setMute(key, enabled) {
-    if (this.muteSettings[key] !== undefined) {
-      this.muteSettings[key] = enabled;
-      // 如果当前播放的是被静音的歌曲，暂停播放
-      if (!enabled && this.currentSongKey === key) {
-        this.pause();
-      }
-    }
-  }
-
-  // 获取静音状态
-  getMute(key) {
-    return this.muteSettings[key] !== undefined ? this.muteSettings[key] : true;
-  }
-
-  // 根据静音设置播放音乐
-  playWithMuteCheck(key) {
-    if (this.muteSettings[key]) {
-      this.playSong(key);
-      this.play();
-      return true;
-    }
-    return false;
-  }
-
   // 销毁音频上下文
   destroy() {
     if (this.innerAudioContext) {

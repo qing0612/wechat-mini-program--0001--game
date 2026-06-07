@@ -41,13 +41,10 @@ Page({
     // 重置模态框状态
     this.modalShowing = false;
     this.modalDismissed = false;
-    // 标记刚从其他页面返回，避免立即触发建筑对话框
-    this.justReturned = true;
-    // 设置冷却期，防止立即重新触发建筑进入提示
+    // 设置冷却期，防止立即触发建筑对话框
     this.buildingCooldown = true;
     setTimeout(() => {
       this.buildingCooldown = false;
-      this.justReturned = false;
     }, 2000); // 2秒冷却期
 
     // 从状态管理中恢复之前保存的位置，如果没有保存则使用初始位置
@@ -275,11 +272,10 @@ Page({
     if (bld) {
       // 只有从外部进入时才触发（isInTriggerZone 从 false 变为 true）
       // 并且不是刚从其他页面返回，以及不在冷却期内
-      if (!this.isInTriggerZone && !this.modalShowing && !this.modalDismissed && !this.justReturned && !this.buildingCooldown) {
+      if (!this.isInTriggerZone && !this.modalShowing && !this.modalDismissed && !this.buildingCooldown) {
         this.isInTriggerZone = true;
         this.modalShowing = true;
         this.moving = false;
-        gameStore.updatePlayerPos(this.player.x, this.player.y);
         
         wx.showModal({
           title: bld.name,
