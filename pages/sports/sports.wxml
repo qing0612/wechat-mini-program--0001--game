@@ -1,0 +1,17 @@
+<view class="sports-page">
+  <image
+    class="bg-image"
+    src="/images/map/sports-bg.png"
+    mode="aspectFill"
+    wx:if="{{!imgError}}"
+    binderror="onImgError"
+  />
+  <view class="bg-placeholder" wx:if="{{imgError}}">
+    <text class="placeholder-text">图片加载失败</text>
+    <text class="placeholder-hint">路径: /images/map/sports-bg.png</text>
+  </view>
+  <view class="back-btn" bindtap="goBack">
+    <text class="back-arrow">←</text>
+    <text class="back-text">返回校园</text>
+  </view>
+</view>

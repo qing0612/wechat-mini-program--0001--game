@@ -316,9 +316,16 @@ Page({
             this.modalShowing = false;
             this.modalDismissed = true;
             if (res.confirm) {
-              wx.navigateTo({
-                url: '/pages/building/building?id=' + bld.id
-              });
+              // 检查是否是运动场入口，若是则跳转到运动场地图
+              if (bld.isSportsField) {
+                wx.navigateTo({
+                  url: '/pages/sports/sports'
+                });
+              } else {
+                wx.navigateTo({
+                  url: '/pages/building/building?id=' + bld.id
+                });
+              }
             }
           }
         });
@@ -430,7 +437,7 @@ Page({
       ctx.strokeStyle = colors[i % colors.length];
       ctx.lineWidth = 2;
       ctx.strokeRect(sp.x, sp.y, zone.w, zone.h);
-      ctx.globalAlpha = 0;
+      ctx.globalAlpha = 0.3;
       ctx.fillStyle = '#fff';
       ctx.font = '14px monospace';
       ctx.textAlign = 'center';

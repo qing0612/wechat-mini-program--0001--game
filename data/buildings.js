@@ -136,6 +136,25 @@ const BUILDINGS = [
     '三、文化意义\n\n'+
     
     '真知讲堂承载师大百年文脉,是校训精神的具象化载体,既是学术交流的殿堂，也是文化传承的舞台，更是师大人探求真理、涵养品格的精神地标。'
+  },
+  {
+    id: 'sports',
+    name: '体育场馆',
+    nameEn: 'Sports Center',
+    triggerZone: { x: 1260, y: 131, w: 150, h: 120 },
+    collisionZone: { x: 185, y: 685, w: 180, h: 150 },
+    interiorImage: '/images/buildings/sports.png',
+    badge: { id: 'badge_sports', name: '体育场馆徽章', image: '/images/badges/sports-badge.jpg', description: '进入体育场馆获得的荣誉徽章' },
+    // 特殊标识：进入此建筑跳转到运动场地图
+    isSportsField: true,
+    historyText: '河北师范大学体育场馆介绍\n\n'+
+    '河北师范大学体育场馆是学校体育教学、训练和大型活动的重要场所，拥有现代化的运动设施。\n\n'+
+    '场馆包含：\n'+
+    '- 标准田径场\n'+
+    '- 室内体育馆\n'+
+    '- 篮球场、排球场\n'+
+    '- 游泳馆\n\n'+
+    '这里是师生锻炼健身、举办体育赛事的活力中心。'
   }
 ];
 

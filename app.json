@@ -3,6 +3,7 @@
     "pages/start/start",
     "pages/map/map",
     "pages/building/building",
+    "pages/sports/sports",
     "pages/settings/settings",
     "pages/backpack/backpack"
   ],

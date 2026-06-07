@@ -237,7 +237,7 @@
   background: rgba(26,26,46,0.85);
   border: 3rpx solid #f4a261;
   padding: 28rpx;
-  margin: 0 50rpx;  
+  margin: 0 100rpx;  
   box-shadow:
     4rpx 0 0 0 #f4a261,
     -4rpx 0 0 0 #f4a261,
