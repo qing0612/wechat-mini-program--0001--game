@@ -242,3 +242,61 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* 背包按钮 */
+.backpack-btn {
+  position: absolute;
+  top: 120rpx;
+  right: 20rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(139, 195, 74, 0.2);
+  border: 2rpx solid rgba(139, 195, 74, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.backpack-btn:active {
+  transform: scale(0.95);
+}
+
+.backpack-icon {
+  width: 22rpx;
+  height: 22rpx;
+  position: relative;
+}
+
+.backpack-body {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%);
+  border-radius: 4rpx 4rpx 8rpx 8rpx;
+  position: relative;
+  box-shadow: inset 2rpx 2rpx 4rpx rgba(255, 255, 255, 0.3), inset -2rpx -2rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.backpack-body::before {
+  content: '';
+  position: absolute;
+  top: 4rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14rpx;
+  height: 3rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2rpx;
+}
+
+.backpack-strap {
+  position: absolute;
+  top: -4rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4rpx;
+  height: 8rpx;
+  background: linear-gradient(180deg, #5d4037 0%, #4e342e 100%);
+  border-radius: 2rpx 2rpx 0 0;
+}

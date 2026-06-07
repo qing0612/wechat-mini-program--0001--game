@@ -3,7 +3,8 @@
     "pages/start/start",
     "pages/map/map",
     "pages/building/building",
-    "pages/settings/settings"
+    "pages/settings/settings",
+    "pages/backpack/backpack"
   ],
   "window": {
     "navigationStyle": "custom",

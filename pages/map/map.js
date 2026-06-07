@@ -582,5 +582,11 @@ Page({
     wx.navigateTo({
       url: '/pages/settings/settings'
     });
+  },
+
+  goToBackpack() {
+    wx.navigateTo({
+      url: '/pages/backpack/backpack'
+    });
   }
 });

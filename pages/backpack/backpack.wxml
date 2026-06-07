@@ -1,0 +1,49 @@
+<view class="backpack-page">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="back-btn" bindtap="goBack">
+      <view class="back-icon">
+        <view class="arrow"></view>
+      </view>
+    </view>
+    <text class="nav-title">背包</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 背包内容 -->
+  <view class="backpack-content">
+    <!-- 物品栏 -->
+    <view class="items-grid">
+      <view 
+        wx:for="{{items}}" 
+        wx:key="id" 
+        class="item-slot"
+        bindtap="selectItem"
+        data-item-id="{{item.id}}">
+        <view class="item-icon" wx:if="{{item}}">
+          <view class="item-image" style="background-color: {{item.color}};"></view>
+          <view class="item-count" wx:if="{{item.count > 1}}">{{item.count}}</view>
+        </view>
+        <view class="item-slot-empty" wx:else>
+          <view class="empty-icon"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选中物品详情 -->
+    <view class="item-detail" wx:if="{{selectedItem}}">
+      <view class="detail-header">
+        <view class="detail-icon" style="background-color: {{selectedItem.color}};"></view>
+        <view class="detail-info">
+          <text class="detail-name">{{selectedItem.name}}</text>
+          <text class="detail-count">数量: {{selectedItem.count}}</text>
+        </view>
+      </view>
+      <text class="detail-desc">{{selectedItem.description}}</text>
+      <view class="detail-actions">
+        <view class="action-btn use-btn" bindtap="useItem" wx:if="{{selectedItem.canUse}}">使用</view>
+        <view class="action-btn drop-btn" bindtap="dropItem">丢弃</view>
+      </view>
+    </view>
+  </view>
+</view>

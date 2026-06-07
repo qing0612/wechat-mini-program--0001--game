@@ -47,21 +47,11 @@
     </view>
   </view>
 
-  <!-- 设置按钮 -->
-  <view class="settings-btn" bindtap="goToSettings">
-    <view class="gear-container">
-      <view class="gear">
-        <view class="tooth t1"></view>
-        <view class="tooth t2"></view>
-        <view class="tooth t3"></view>
-        <view class="tooth t4"></view>
-        <view class="tooth t5"></view>
-        <view class="tooth t6"></view>
-        <view class="tooth t7"></view>
-        <view class="tooth t8"></view>
-        <view class="gear-body"></view>
-        <view class="center-hole"></view>
-      </view>
+  <!-- 背包按钮 -->
+  <view class="backpack-btn" bindtap="goToBackpack">
+    <view class="backpack-icon">
+      <view class="backpack-body"></view>
+      <view class="backpack-strap"></view>
     </view>
   </view>
 
