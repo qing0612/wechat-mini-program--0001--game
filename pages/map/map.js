@@ -38,7 +38,7 @@ Page({
     this.canvasReady = false;
     this.resizeTimer = null;
     this._resizeHandler = null;
-    // 重置模态框状态（从其他页面返回时）
+    // 重置模态框状态
     this.modalShowing = false;
     this.modalDismissed = false;
     // 标记刚从其他页面返回，避免立即触发建筑对话框
@@ -54,6 +54,8 @@ Page({
     const state = gameStore.getState();
     this.player = { x: state.player.x || PLAYER.SPAWN_X, y: state.player.y || PLAYER.SPAWN_Y };
     this.playerDir = state.player.direction || 'down';
+    // 恢复之前是否在触发区域的状态
+    this.isInTriggerZone = state.player.inTriggerZone || false;
 
     this.unsubscribe = gameStore.subscribe(this.handleStateChange.bind(this));
   },
@@ -133,9 +135,21 @@ Page({
   onShow() {
     console.log('Map page onShow');
 
-    // 重置模态框状态（从建筑页面返回时）
+    // 重置模态框状态（从其他页面返回时）
     this.modalShowing = false;
     this.modalDismissed = false;
+    // 标记刚从其他页面返回，避免立即触发建筑对话框
+    this.justReturned = true;
+    // 设置冷却期，防止立即重新触发建筑进入提示
+    this.buildingCooldown = true;
+    setTimeout(() => {
+      this.buildingCooldown = false;
+      this.justReturned = false;
+    }, 2000); // 2秒冷却期
+
+    // 从状态管理中恢复是否在触发区域的状态，这样返回时不会因为"进入"建筑区域而触发弹窗
+    const state = gameStore.getState();
+    this.isInTriggerZone = state.player.inTriggerZone || false;
 
     // 确保游戏循环运行
     if (this.canvas && !this.running) {
@@ -204,6 +218,8 @@ Page({
     gameStore.stopGame();
     gameStore.updatePlayerPos(this.player.x, this.player.y);
     gameStore.updatePlayerDirection(this.playerDir);
+    // 保存当前是否在触发区域的状态
+    gameStore.setInTriggerZone(this.isInTriggerZone || false);
 
     if (this._resizeHandler) {
       wx.offWindowResize(this._resizeHandler);
@@ -244,6 +260,9 @@ Page({
         this.player.y = newY;
         this.moving = true;
         this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
+        // 实时更新状态管理，确保离开页面时保存的是最新位置
+        gameStore.updatePlayerPos(this.player.x, this.player.y);
+        gameStore.updatePlayerDirection(this.playerDir);
       } else {
         this.moving = false;
       }

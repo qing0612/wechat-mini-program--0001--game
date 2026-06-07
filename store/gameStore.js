@@ -5,7 +5,8 @@ class GameStore {
       player: {
         x: 0,
         y: 0,
-        direction: 'down'
+        direction: 'down',
+        inTriggerZone: false
       },
       isRunning: false,
       currentBuilding: null
@@ -39,6 +40,10 @@ class GameStore {
 
   updatePlayerDirection(direction) {
     this.setState({ player: { ...this.state.player, direction } });
+  }
+
+  setInTriggerZone(inTriggerZone) {
+    this.setState({ player: { ...this.state.player, inTriggerZone } });
   }
 
   setCurrentBuilding(building) {
