@@ -20,7 +20,8 @@ Page({
     minimapPlayerX: 50,
     minimapPlayerY: 50,
     coordX: 0,
-    coordY: 0
+    coordY: 0,
+    gameTime: '00:00' // 游戏计时器
   },
 
   onLoad() {
@@ -46,6 +47,10 @@ Page({
     setTimeout(() => {
       this.buildingCooldown = false;
     }, 2000); // 2秒冷却期
+
+    // 游戏计时器
+    this.gameSeconds = 0;
+    this.timerInterval = null;
 
     // 从状态管理中恢复之前保存的位置和状态
     const state = gameStore.getState();
@@ -158,6 +163,18 @@ Page({
       this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
     }
 
+    // 启动计时器
+    if (!this.timerInterval) {
+      this.timerInterval = setInterval(() => {
+        this.gameSeconds++;
+        const minutes = Math.floor(this.gameSeconds / 60);
+        const seconds = this.gameSeconds % 60;
+        this.setData({
+          gameTime: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+        });
+      }, 1000);
+    }
+
     // 延迟播放音乐，避免影响游戏初始化
     setTimeout(() => {
       audioManager.playWithMuteCheck('map');
@@ -220,6 +237,12 @@ Page({
     gameStore.updatePlayerDirection(this.playerDir);
     // 保存当前是否在触发区域的状态
     gameStore.setInTriggerZone(this.isInTriggerZone || false);
+
+    // 停止计时器
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
 
     if (this._resizeHandler) {
       wx.offWindowResize(this._resizeHandler);

@@ -130,11 +130,41 @@
   letter-spacing: 1rpx;
 }
 
+/* 计数器 */
+.counter {
+  position: absolute;
+  top: 30rpx;
+  right: 100rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 10rpx;
+  background: rgba(15, 15, 26, 0.85);
+  border: 1rpx solid #f4a261;
+  border-radius: 6rpx;
+  z-index: 90;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.3);
+}
+
+.counter-label {
+  font-size: 14rpx;
+  color: rgba(244, 162, 97, 0.7);
+  font-weight: 500;
+}
+
+.counter-value {
+  font-size: 16rpx;
+  color: #f4a261;
+  font-weight: 600;
+  font-family: monospace;
+  letter-spacing: 1rpx;
+}
+
 /* 设置按钮 */
 .settings-btn {
   position: absolute;
   top: 60rpx;
-  right: 40rpx;
+  right: 20rpx;
   width: 40rpx;
   height: 40rpx;
   background: rgba(192, 192, 192, 0.2);

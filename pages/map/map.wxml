@@ -23,6 +23,12 @@
     </view>
   </view>
 
+  <!-- 计数器 -->
+  <view class="counter">
+    <text class="counter-label">计时</text>
+    <text class="counter-value">{{gameTime}}</text>
+  </view>
+
   <!-- 设置按钮 -->
   <view class="settings-btn" bindtap="goToSettings">
     <view class="gear-container">

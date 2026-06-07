@@ -13,13 +13,36 @@ class AudioManager {
       start: { id: 1, name: '开始页面音乐', src: '/audio/bgm.mp3' },
       map: { id: 2, name: '地图页面音乐', src: '/audio/bgm2.mp3' }
     };
-    this.currentSongKey = 'start';
-    // 静音状态设置
-    this.muteSettings = {
-      start: true,  // start页面音乐是否开启
-      map: true     // map页面音乐是否开启
-    };
+    this.currentSongKey = null;
+    // 静音状态设置（从本地存储读取）
+    this.muteSettings = this.getStoredMuteSettings();
     AudioManager.instance = this;
+  }
+
+  // 从本地存储读取静音设置
+  getStoredMuteSettings() {
+    try {
+      const stored = wx.getStorageSync('mute_settings');
+      if (stored !== '') {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('读取静音设置失败:', e);
+    }
+    // 默认开启
+    return {
+      start: true,
+      map: true
+    };
+  }
+
+  // 保存静音设置到本地存储
+  saveMuteSettings() {
+    try {
+      wx.setStorageSync('mute_settings', JSON.stringify(this.muteSettings));
+    } catch (e) {
+      console.error('保存静音设置失败:', e);
+    }
   }
 
   // 从本地存储读取音量
@@ -129,13 +152,8 @@ class AudioManager {
     if (this.songs[key]) {
       this.currentSongKey = key;
       if (this.innerAudioContext) {
-        const wasPlaying = this.isPlaying;
         this.innerAudioContext.src = this.songs[key].src;
-        if (wasPlaying) {
-          this.innerAudioContext.play().catch((err) => {
-            console.error('播放失败:', err);
-          });
-        }
+        // 不自动播放，由调用者决定是否播放
       }
     }
     return this.songs[this.currentSongKey];
@@ -145,9 +163,12 @@ class AudioManager {
   setMute(key, enabled) {
     if (this.muteSettings[key] !== undefined) {
       this.muteSettings[key] = enabled;
-      // 如果当前播放的是被静音的歌曲，暂停播放
+      // 保存到本地存储
+      this.saveMuteSettings();
+      // 如果当前播放的是被静音的歌曲，停止播放
       if (!enabled && this.currentSongKey === key) {
-        this.pause();
+        this.stop();
+        this.currentSongKey = null;
       }
     }
   }
@@ -157,14 +178,24 @@ class AudioManager {
     return this.muteSettings[key] !== undefined ? this.muteSettings[key] : true;
   }
 
-  // 根据静音设置播放音乐
+  // 根据静音设置播放音乐（每个页面只播放自己的音乐）
   playWithMuteCheck(key) {
-    if (this.muteSettings[key]) {
-      this.playSong(key);
-      this.play();
-      return true;
+    // 如果该页面的音乐被静音，停止播放并返回
+    if (!this.muteSettings[key]) {
+      this.stop();
+      this.currentSongKey = null;
+      return false;
     }
-    return false;
+    // 如果当前播放的不是目标页面的音乐，先停止并切换
+    if (this.currentSongKey !== key) {
+      this.stop();
+      this.playSong(key);
+    }
+    // 如果还没在播放，开始播放
+    if (!this.isPlaying) {
+      this.play();
+    }
+    return true;
   }
 
   // 销毁音频上下文
