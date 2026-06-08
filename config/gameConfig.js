@@ -12,12 +12,12 @@ module.exports = {
     HEIGHT: 1093
   },
 
-  // 运动场地图配置
+  // 运动场地图配置（尺寸与 sports-bg.png 实际像素一致）
   SPORTS_MAP: {
-    WIDTH: 800,
-    HEIGHT: 600,
-    SPAWN_X: 400,
-    SPAWN_Y: 300
+    WIDTH: 949,
+    HEIGHT: 1592,
+    SPAWN_X: 474,
+    SPAWN_Y: 1400
   },
 
   UI: {

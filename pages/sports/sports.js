@@ -1,6 +1,6 @@
 const Joystick = require('../../utils/joystick.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
-const { SpriteAnimator, dirFromVector } = require('../../utils/sprite.js');
+const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
 const gameStore = require('../../store/gameStore.js');
 const gameConfig = require('../../config/gameConfig.js');
 
@@ -33,9 +33,12 @@ Page({
     this.mapW = SPORTS_MAP.WIDTH;
     this.mapH = SPORTS_MAP.HEIGHT;
 
-    // 玩家出生在运动场入口
-    this.player = { x: SPORTS_MAP.SPAWN_X, y: SPORTS_MAP.SPAWN_Y };
-    this.playerDir = 'up';
+    // 从状态管理恢复运动场玩家位置，没有则使用默认出生点
+    const state = gameStore.getState();
+    this.player = state.sportsPlayer.x ?
+      { x: state.sportsPlayer.x, y: state.sportsPlayer.y } :
+      { x: SPORTS_MAP.SPAWN_X, y: SPORTS_MAP.SPAWN_Y };
+    this.playerDir = state.sportsPlayer.direction || 'up';
     this.moving = false;
 
     // 游戏计时器
@@ -73,8 +76,8 @@ Page({
       const canvas = res[0].node;
       this.canvas = canvas;
       
-      // 使用新 API 获取系统信息
-      const winInfo = wx.getWindowInfo();
+      // 使用新 API 获取系统信息，兼容旧版
+      const winInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
       const dpr = winInfo.pixelRatio || 2;
 
       // 设置 Canvas 2D 宽高
@@ -165,48 +168,12 @@ Page({
 
     ctx.save();
 
-    // 计算相机位置（始终以玩家为中心）
-    let camX = this.player.x - this.viewW / 2;
-    let camY = this.player.y - this.viewH / 2;
-    
-    // 边界检查（确保相机不超出地图范围）
-    camX = Math.max(0, Math.min(camX, this.mapW - this.viewW));
-    camY = Math.max(0, Math.min(camY, this.mapH - this.viewH));
-    
-    // 如果地图小于视口，居中显示
-    if (this.mapW <= this.viewW) {
-      camX = (this.mapW - this.viewW) / 2;
-    }
-    if (this.mapH <= this.viewH) {
-      camY = (this.mapH - this.viewH) / 2;
-    }
-    
-    const cam = { x: camX, y: camY };
+    // 使用统一的相机计算函数
+    const cam = computeCamera(this.player.x, this.player.y, this.viewW, this.viewH, this.mapW, this.mapH);
 
     // 绘制背景
     if (this.mapLoaded && this.mapImg) {
-      // 获取图片的实际尺寸
-      const imgW = this.mapImg.width;
-      const imgH = this.mapImg.height;
-      
-      // 如果地图小于等于视口，直接居中绘制整个图片
-      if (this.mapW <= this.viewW && this.mapH <= this.viewH) {
-        const offsetX = (this.viewW - imgW) / 2;
-        const offsetY = (this.viewH - imgH) / 2;
-        ctx.drawImage(this.mapImg, offsetX, offsetY, imgW, imgH);
-      } else {
-        // 地图大于视口，裁剪绘制
-        // 使用地图配置的尺寸来计算裁剪区域
-        const scaleX = imgW / this.mapW;
-        const scaleY = imgH / this.mapH;
-        ctx.drawImage(
-          this.mapImg,
-          camX * scaleX, camY * scaleY,  // 源图片裁剪位置
-          this.viewW * scaleX, this.viewH * scaleY,  // 源图片裁剪尺寸
-          0, 0,  // 目标绘制位置
-          this.viewW, this.viewH  // 目标绘制尺寸
-        );
-      }
+      ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
     } else {
       // 占位：绿色草地 + 网格
       ctx.fillStyle = '#3D6B24';
@@ -224,61 +191,9 @@ Page({
 
     // 绘制玩家
     const sp = worldToScreen(this.player.x, this.player.y, cam);
-    this.drawPlayer(ctx, sp.x, sp.y);
+    drawPlayer(ctx, sp.x, sp.y, this.moving, this.anim.frameIndex, this.playerDir);
 
     ctx.restore();
-  },
-
-  drawPlayer(ctx, x, y) {
-    const s = PLAYER.SIZE;
-    const bounce = this.moving && this.anim.frameIndex === 1 ? -4 : 0;
-    const p = 4;
-    const ox = x - s / 2;
-    const oy = y - s / 2 + bounce;
-
-    const C = {
-      o: '#3D2200', O: '#3D2200', M: '#C07820', b: '#D4A030',
-      v: '#F5E6C8', e: '#1A1A1A', h: '#FFFFFF', n: '#2D1800',
-      E: '#C07820', I: '#F0A0A0',
-    };
-
-    const grids = {
-      down: [
-        '....EE..EE....', '...EEOOEEOE...', '..MMMMMMMMMM..',
-        '..MbbMMbbMbM..', '..MbMebeMeMb..', '..MbbbMMbbbM..',
-        '..MMbbnnbbMM..', '...MMbbbbMM...', '...MbbvvbbM...',
-        '...MbbvvbbM...', '....MbvvbM....', '....MMvvMM....',
-      ],
-      up: [
-        '....EE..EE....', '...EEOOEEOE...', '..MMMMMMMMMM..',
-        '..MbMMMMbMbM..', '..MbMMMMbMbM..', '..MbbbbbbbbbM..',
-        '..MMbbbbbbMM..', '...MMbbbbMM...', '...MbbvvbbM...',
-        '...MbbvvbbM...', '....MbvvbM....', '....MMvvMM....',
-      ],
-      left: [
-        '...EE.........', '..EIOE........', '.MMMMMMM......',
-        '.MMMMbbM......', '.MMMebbM......', '.MMbbbMM......',
-        '.MMnnbbM......', '..MbbbbM......', '..MbbvvbM.....',
-        '..MbbvvbM.....', '...MbvvbM.....', '...MMvvMM.....',
-      ],
-      right: [
-        '.........EE...', '........EOIE..', '.......MMMMMMM',
-        '.......bbMMMMM', '.......bbeMMM.', '.......bbbMM..',
-        '.......bbnnMM.', '.......bbbbM..', '....bvvbbM....',
-        '....bvvbbM....', '....MbvvbM....', '.....MMvvMM...',
-      ]
-    };
-
-    const grid = grids[this.playerDir] || grids.down;
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        const ch = grid[r][c];
-        if (ch !== '.' && C[ch]) {
-          ctx.fillStyle = C[ch];
-          ctx.fillRect(ox + c * p, oy + r * p, p, p);
-        }
-      }
-    }
   },
 
   onTouchStart(e) {
@@ -310,19 +225,21 @@ Page({
   },
 
   goBack() {
+    gameStore.updateSportsPlayer(this.player.x, this.player.y, this.playerDir);
     wx.navigateBack();
   },
 
   onHide() {
-    this.running = false;
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
+    this._stop();
   },
 
   onUnload() {
+    this._stop();
+  },
+
+  _stop() {
     this.running = false;
+    gameStore.updateSportsPlayer(this.player.x, this.player.y, this.playerDir);
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = null;

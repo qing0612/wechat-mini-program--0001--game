@@ -18,6 +18,7 @@ class GameStore {
       sportsPlayer: { x: 0, y: 0, direction: 'down' } // 运动场玩家状态
     };
     this.listeners = [];
+    this._restore();
   }
 
   setState(newState) {
@@ -38,6 +39,30 @@ class GameStore {
 
   notify() {
     this.listeners.forEach(listener => listener(this.state));
+    this._save();
+  }
+
+  _save() {
+    try {
+      wx.setStorageSync('game_state', JSON.stringify({
+        player: this.state.player,
+        isDay: this.state.isDay,
+        backpack: this.state.backpack,
+        sportsPlayer: this.state.sportsPlayer
+      }));
+    } catch (e) {}
+  }
+
+  _restore() {
+    try {
+      const raw = wx.getStorageSync('game_state');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.player) this.state.player = { ...this.state.player, ...d.player };
+      if (typeof d.isDay === 'boolean') this.state.isDay = d.isDay;
+      if (Array.isArray(d.backpack)) this.state.backpack = d.backpack;
+      if (d.sportsPlayer) this.state.sportsPlayer = { ...this.state.sportsPlayer, ...d.sportsPlayer };
+    } catch (e) {}
   }
 
   updatePlayerPos(x, y) {

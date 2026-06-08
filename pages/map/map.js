@@ -1,7 +1,7 @@
 // c:\Users\yibohe\Desktop\小程序-代码\pages\map\map.js
 const Joystick = require('../../utils/joystick.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
-const { SpriteAnimator, dirFromVector } = require('../../utils/sprite.js');
+const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
 const gameStore = require('../../store/gameStore.js');
 const gameConfig = require('../../config/gameConfig.js');
 const buildingService = require('../../services/buildingService.js');
@@ -283,10 +283,11 @@ Page({
         this.player.y = newY;
         this.moving = true;
         this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
+      } else {
         // 实时更新状态管理，确保离开页面时保存的是最新位置
         gameStore.updatePlayerPos(this.player.x, this.player.y);
         gameStore.updatePlayerDirection(this.playerDir);
-      } else {
+
         this.moving = false;
       }
     }
@@ -378,7 +379,7 @@ Page({
     this.drawBuildingZones(ctx, cam);
 
     const sp = worldToScreen(this.player.x, this.player.y, cam);
-    this.drawPlayer(ctx, sp.x, sp.y);
+    drawPlayer(ctx, sp.x, sp.y, this.moving, this.anim.frameIndex, this.playerDir);
 
     ctx.restore();
   },
@@ -437,104 +438,13 @@ Page({
       ctx.strokeStyle = colors[i % colors.length];
       ctx.lineWidth = 2;
       ctx.strokeRect(sp.x, sp.y, zone.w, zone.h);
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0;
       ctx.fillStyle = '#fff';
       ctx.font = '14px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(b.name, sp.x + zone.w / 2, sp.y + zone.h / 2 + 5);
     });
     ctx.globalAlpha = 1;
-  },
-
-  drawPlayer(ctx, x, y) {
-    const s = PLAYER.SIZE;
-    const bounce = this.moving && this.anim.frameIndex === 1 ? -4 : 0;
-    const p = 4;
-    const ox = x - s / 2;
-    const oy = y - s / 2 + bounce;
-
-    const C = {
-      o: '#3D2200',
-      M: '#C07820',
-      b: '#D4A030',
-      v: '#F5E6C8',
-      e: '#1A1A1A',
-      h: '#FFFFFF',
-      n: '#2D1800',
-      E: '#C07820',
-      I: '#F0A0A0',
-    };
-
-    const grids = {
-      down: [
-        '....EE..EE....',
-        '...EEOOEEOE...',
-        '..MMMMMMMMMM..',
-        '..MbbMMbbMbM..',
-        '..MbMebeMeMb..',
-        '..MbbbMMbbbM..',
-        '..MMbbnnbbMM..',
-        '...MMbbbbMM...',
-        '...MbbvvbbM...',
-        '...MbbvvbbM...',
-        '....MbvvbM....',
-        '....MMvvMM....',
-      ],
-      up: [
-        '....EE..EE....',
-        '...EEOOEEOE...',
-        '..MMMMMMMMMM..',
-        '..MbMMMMbMbM..',
-        '..MbMMMMbMbM..',
-        '..MbbbbbbbbbM..',
-        '..MMbbbbbbMM..',
-        '...MMbbbbMM...',
-        '...MbbvvbbM...',
-        '...MbbvvbbM...',
-        '....MbvvbM....',
-        '....MMvvMM....',
-      ],
-      left: [
-        '...EE.........',
-        '..EIOE........',
-        '.MMMMMMM......',
-        '.MMMMbbM......',
-        '.MMMebbM......',
-        '.MMbbbMM......',
-        '.MMnnbbM......',
-        '..MbbbbM......',
-        '..MbbvvbM.....',
-        '..MbbvvbM.....',
-        '...MbvvbM.....',
-        '...MMvvMM.....',
-      ],
-      right: [
-        '.........EE...',
-        '........EOIE..',
-        '.......MMMMMMM',
-        '.......bbMMMMM',
-        '.......bbeMMM.',
-        '.......bbbMM..',
-        '.......bbnnMM.',
-        '.......bbbbM..',
-        '....bvvbbM....',
-        '....bvvbbM....',
-        '....MbvvbM....',
-        '.....MMvvMM...',
-      ]
-    };
-
-    const grid = grids[this.playerDir] || grids.down;
-
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        const ch = grid[r][c];
-        if (ch !== '.' && C[ch]) {
-          ctx.fillStyle = C[ch];
-          ctx.fillRect(ox + c * p, oy + r * p, p, p);
-        }
-      }
-    }
   },
 
   onTouchStart(e) {

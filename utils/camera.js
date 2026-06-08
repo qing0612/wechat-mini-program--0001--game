@@ -1,10 +1,17 @@
 function computeCamera(playerX, playerY, viewW, viewH, mapW, mapH) {
   let x = playerX - viewW / 2;
   let y = playerY - viewH / 2;
-  if (x < 0) x = 0;
-  if (y < 0) y = 0;
-  if (x > mapW - viewW) x = Math.max(0, mapW - viewW);
-  if (y > mapH - viewH) y = Math.max(0, mapH - viewH);
+  // 地图比视口小时居中
+  if (mapW <= viewW) {
+    x = (mapW - viewW) / 2;
+  } else {
+    x = Math.max(0, Math.min(x, mapW - viewW));
+  }
+  if (mapH <= viewH) {
+    y = (mapH - viewH) / 2;
+  } else {
+    y = Math.max(0, Math.min(y, mapH - viewH));
+  }
   return { x, y };
 }
 
