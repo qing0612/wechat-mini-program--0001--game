@@ -253,6 +253,15 @@ Page({
     }
   },
 
+  // 防抖保存位置
+  _debounceSavePosition() {
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      gameStore.updatePlayerPos(this.player.x, this.player.y);
+      gameStore.updatePlayerDirection(this.playerDir);
+    }, 200);
+  },
+
   gameLoop(ts) {
     if (!this.running || !this.canvas) return;
     const dt = this.lastTime ? Math.min(ts - this.lastTime, 50) : 16;
@@ -283,9 +292,8 @@ Page({
         this.player.y = newY;
         this.moving = true;
         this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
-        // 移动时更新状态管理
-        gameStore.updatePlayerPos(this.player.x, this.player.y);
-        gameStore.updatePlayerDirection(this.playerDir);
+        // 防抖保存位置，避免每帧写Storage
+        this._debounceSavePosition();
       } else {
         this.moving = false;
       }
@@ -488,7 +496,16 @@ Page({
       success: (res) => {
         if (res.confirm) {
           this.running = false;
-          gameStore.updatePlayerPos(this.player.x, this.player.y);
+          const state = gameStore.getState();
+          
+          // 如果关闭了数据保存（无痕模式），先设置为不保存
+          if (!state.saveOnQuit) {
+            gameStore.setState({ saveOnQuit: false });
+          } else {
+            // 正常模式：保存当前位置
+            gameStore.updatePlayerPos(this.player.x, this.player.y);
+          }
+          
           wx.navigateBack({
             fail: () => {
               wx.redirectTo({ url: '/pages/start/start' });

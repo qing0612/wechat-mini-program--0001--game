@@ -101,9 +101,11 @@ class AudioManager {
     if (!this.innerAudioContext) {
       this.init();
     }
-    this.innerAudioContext.play().catch((err) => {
+    try {
+      this.innerAudioContext.play();
+    } catch (err) {
       console.error('播放失败:', err);
-    });
+    }
   }
 
   // 暂停音频

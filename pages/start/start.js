@@ -1,5 +1,6 @@
 const gameStore = require('../../store/gameStore.js');
 const audioManager = require('../../utils/audioManager.js');
+const gameConfig = require('../../config/gameConfig.js');
 
 Page({
   data: { 
@@ -35,6 +36,96 @@ Page({
     // 进入游戏时暂停背景音乐
     audioManager.pause();
     
+    // 检查是否有历史游戏数据
+    this._checkGameDataAndShowModal();
+  },
+
+  // 检查是否有历史游戏数据并显示相应弹窗
+  _checkGameDataAndShowModal() {
+    try {
+      const raw = wx.getStorageSync('game_state');
+      if (!raw) {
+        // 没有历史数据，显示弹窗1：新建游戏
+        this._showNewGameModal();
+      } else {
+        // 有历史数据，显示弹窗2：新建游戏或继续
+        this._showContinueModal();
+      }
+    } catch (e) {
+      // 读取失败，默认显示新建游戏弹窗
+      this._showNewGameModal();
+    }
+  },
+
+  // 弹窗1：新建游戏（无历史数据）
+  _showNewGameModal() {
+    wx.showModal({
+      title: '开始游戏',
+      content: '准备开始新的冒险之旅吗？',
+      confirmText: '新建游戏',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          this._startNewGame();
+        }
+      }
+    });
+  },
+
+  // 弹窗2：新建游戏或继续上一次（有历史数据）
+  _showContinueModal() {
+    wx.showActionSheet({
+      itemList: ['继续上一次游戏', '新建游戏'],
+      itemColor: '#f4a261',
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 继续上一次游戏
+          this._continueGame();
+        } else if (res.tapIndex === 1) {
+          // 新建游戏
+          this._startNewGame();
+        }
+      },
+      fail: () => {
+        // 用户取消
+      }
+    });
+  },
+
+  // 开始新游戏
+  _startNewGame() {
+    // 清除历史数据
+    try {
+      wx.removeStorageSync('game_state');
+    } catch (e) {}
+    
+    // 重置为初始状态
+    gameStore.setState({
+      player: { 
+        x: gameConfig.PLAYER.SPAWN_X, 
+        y: gameConfig.PLAYER.SPAWN_Y, 
+        direction: 'down', 
+        inTriggerZone: false 
+      },
+      isRunning: false,
+      currentBuilding: null,
+      isDay: true,
+      backpack: [],
+      sportsPlayer: { x: 0, y: 0, direction: 'down' }
+    });
+    
+    // 跳转到游戏地图
+    wx.navigateTo({
+      url: '/pages/map/map',
+      fail: () => {
+        wx.redirectTo({ url: '/pages/map/map' });
+      }
+    });
+  },
+
+  // 继续上一次游戏
+  _continueGame() {
+    // 使用 gameStore 中已恢复的历史数据，直接跳转
     wx.navigateTo({
       url: '/pages/map/map',
       fail: () => {

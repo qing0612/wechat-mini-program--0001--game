@@ -4,21 +4,54 @@ const gameConfig = require('../config/gameConfig.js');
 class GameStore {
   constructor() {
     const { PLAYER } = gameConfig;
-    this.state = {
-      player: {
-        x: PLAYER.SPAWN_X,
-        y: PLAYER.SPAWN_Y,
-        direction: 'down',
-        inTriggerZone: false
-      },
-      isRunning: false,
-      currentBuilding: null,
-      isDay: true, // 白天/晚上状态，默认白天
-      backpack: [],
-      sportsPlayer: { x: 0, y: 0, direction: 'down' } // 运动场玩家状态
-    };
     this.listeners = [];
-    this._restore();
+    
+    // 先读取保存设置，决定是否恢复数据
+    let saveOnQuit = true;
+    try {
+      const raw = wx.getStorageSync('game_state');
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (typeof d.saveOnQuit === 'boolean') {
+          saveOnQuit = d.saveOnQuit;
+        }
+      }
+    } catch (e) {}
+    
+    if (saveOnQuit) {
+      // 正常模式：初始化默认状态后恢复数据
+      this.state = {
+        player: {
+          x: PLAYER.SPAWN_X,
+          y: PLAYER.SPAWN_Y,
+          direction: 'down',
+          inTriggerZone: false
+        },
+        isRunning: false,
+        currentBuilding: null,
+        isDay: true,
+        backpack: [],
+        sportsPlayer: { x: 0, y: 0, direction: 'down' },
+        saveOnQuit: true
+      };
+      this._restore();
+    } else {
+      // 无痕模式：直接使用默认状态，不读取历史数据
+      this.state = {
+        player: {
+          x: PLAYER.SPAWN_X,
+          y: PLAYER.SPAWN_Y,
+          direction: 'down',
+          inTriggerZone: false
+        },
+        isRunning: false,
+        currentBuilding: null,
+        isDay: true,
+        backpack: [],
+        sportsPlayer: { x: 0, y: 0, direction: 'down' },
+        saveOnQuit: false
+      };
+    }
   }
 
   setState(newState) {
@@ -43,12 +76,17 @@ class GameStore {
   }
 
   _save() {
+    // 无痕模式下不保存数据
+    if (!this.state.saveOnQuit) {
+      return;
+    }
     try {
       wx.setStorageSync('game_state', JSON.stringify({
         player: this.state.player,
         isDay: this.state.isDay,
         backpack: this.state.backpack,
-        sportsPlayer: this.state.sportsPlayer
+        sportsPlayer: this.state.sportsPlayer,
+        saveOnQuit: this.state.saveOnQuit
       }));
     } catch (e) {}
   }
@@ -62,7 +100,12 @@ class GameStore {
       if (typeof d.isDay === 'boolean') this.state.isDay = d.isDay;
       if (Array.isArray(d.backpack)) this.state.backpack = d.backpack;
       if (d.sportsPlayer) this.state.sportsPlayer = { ...this.state.sportsPlayer, ...d.sportsPlayer };
+      if (typeof d.saveOnQuit === 'boolean') this.state.saveOnQuit = d.saveOnQuit;
     } catch (e) {}
+  }
+
+  setSaveOnQuit(value) {
+    this.setState({ saveOnQuit: value });
   }
 
   updatePlayerPos(x, y) {
@@ -131,7 +174,6 @@ class GameStore {
   hasBadge(badgeId) {
     return this.state.backpack.some(item => item.id === badgeId);
   }
-
 }
 
 module.exports = new GameStore();

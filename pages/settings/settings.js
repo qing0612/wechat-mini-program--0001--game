@@ -9,7 +9,9 @@ Page({
     // 音量值 (0-1)
     volume: 1,
     // 日夜状态
-    isDay: true
+    isDay: true,
+    // 返回开始页面时是否保存数据
+    saveOnQuit: true
   },
 
   onLoad() {
@@ -21,7 +23,8 @@ Page({
       startMusicEnabled: audioManager.getMute('start'),
       mapMusicEnabled: audioManager.getMute('map'),
       volume: audioManager.volume * 100,
-      isDay: state.isDay
+      isDay: state.isDay,
+      saveOnQuit: state.saveOnQuit
     });
   },
 
@@ -53,6 +56,13 @@ Page({
     const isDay = e.detail.value;
     this.setData({ isDay });
     gameStore.setIsDay(isDay);
+  },
+
+  // 切换返回开始页面时保存数据的开关
+  toggleSaveOnQuit(e) {
+    const value = e.detail.value;
+    this.setData({ saveOnQuit: value });
+    gameStore.setSaveOnQuit(value);
   },
 
   // 返回上一页
