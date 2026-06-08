@@ -108,33 +108,5 @@
       </view>
     </view>
 
-    <!-- 数据设置区域 -->
-    <view class="settings-section">
-      <view class="section-title">
-        <view class="section-icon">
-          <view class="data-icon">
-            <view class="data-box">
-              <view class="data-line line1"></view>
-              <view class="data-line line2"></view>
-              <view class="data-line line3"></view>
-            </view>
-          </view>
-        </view>
-        <text class="section-text">数据设置</text>
-      </view>
-
-      <!-- 返回开始页面时保存数据 -->
-      <view class="setting-item">
-        <view class="item-label">
-          <text class="label-text">返回开始页面时保存数据</text>
-        </view>
-        <switch 
-          class="item-switch" 
-          color="#f4a261" 
-          checked="{{saveOnQuit}}" 
-          bindchange="toggleSaveOnQuit" 
-        />
-      </view>
-    </view>
   </view>
 </view>
