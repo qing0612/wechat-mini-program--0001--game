@@ -1,5 +1,4 @@
 <view class="sports-page">
-  <image class="map-bg" src="/images/map/sports-bg.png" mode="aspectFill" />
   <canvas type="2d" id="playerCanvas" class="player-canvas" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" />
   
   <view class="back-btn" bindtap="goBack">

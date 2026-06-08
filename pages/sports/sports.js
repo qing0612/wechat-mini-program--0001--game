@@ -165,36 +165,47 @@ Page({
 
     ctx.save();
 
-    // 相机跟随玩家（处理地图尺寸小于视口的情况）
+    // 计算相机位置（始终以玩家为中心）
     let camX = this.player.x - this.viewW / 2;
     let camY = this.player.y - this.viewH / 2;
     
-    // 边界检查
-    if (this.mapW <= this.viewW) {
-      camX = (this.mapW - this.viewW) / 2; // 居中
-    } else {
-      camX = Math.max(0, Math.min(camX, this.mapW - this.viewW));
-    }
+    // 边界检查（确保相机不超出地图范围）
+    camX = Math.max(0, Math.min(camX, this.mapW - this.viewW));
+    camY = Math.max(0, Math.min(camY, this.mapH - this.viewH));
     
+    // 如果地图小于视口，居中显示
+    if (this.mapW <= this.viewW) {
+      camX = (this.mapW - this.viewW) / 2;
+    }
     if (this.mapH <= this.viewH) {
-      camY = (this.mapH - this.viewH) / 2; // 居中
-    } else {
-      camY = Math.max(0, Math.min(camY, this.mapH - this.viewH));
+      camY = (this.mapH - this.viewH) / 2;
     }
     
     const cam = { x: camX, y: camY };
 
     // 绘制背景
     if (this.mapLoaded && this.mapImg) {
-      // 根据地图尺寸和视口尺寸决定绘制方式
+      // 获取图片的实际尺寸
+      const imgW = this.mapImg.width;
+      const imgH = this.mapImg.height;
+      
+      // 如果地图小于等于视口，直接居中绘制整个图片
       if (this.mapW <= this.viewW && this.mapH <= this.viewH) {
-        // 地图小于视口，居中绘制
-        const offsetX = (this.viewW - this.mapW) / 2;
-        const offsetY = (this.viewH - this.mapH) / 2;
-        ctx.drawImage(this.mapImg, 0, 0, this.mapW, this.mapH, offsetX, offsetY, this.mapW, this.mapH);
+        const offsetX = (this.viewW - imgW) / 2;
+        const offsetY = (this.viewH - imgH) / 2;
+        ctx.drawImage(this.mapImg, offsetX, offsetY, imgW, imgH);
       } else {
         // 地图大于视口，裁剪绘制
-        ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
+        // 使用地图配置的尺寸来计算裁剪区域
+        const scaleX = imgW / this.mapW;
+        const scaleY = imgH / this.mapH;
+        ctx.drawImage(
+          this.mapImg,
+          camX * scaleX, camY * scaleY,  // 源图片裁剪位置
+          this.viewW * scaleX, this.viewH * scaleY,  // 源图片裁剪尺寸
+          0, 0,  // 目标绘制位置
+          this.viewW, this.viewH  // 目标绘制尺寸
+        );
       }
     } else {
       // 占位：绿色草地 + 网格
