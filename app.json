@@ -14,8 +14,7 @@
     "navigationBarBackgroundColor": "#1a1a2e",
     "navigationBarTitleText": "河北师范大学",
     "navigationBarTextStyle": "white",
-    "pageOrientation": "landscape",
-    "launchImagePath": "/images/start-bg.png"
+    "pageOrientation": "landscape"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

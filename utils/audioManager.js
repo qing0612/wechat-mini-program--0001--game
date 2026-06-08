@@ -134,21 +134,6 @@ class AudioManager {
     this.saveVolume();
   }
 
-  // 获取播放状态
-  getPlayingState() {
-    return this.isPlaying;
-  }
-
-  // 获取当前歌曲信息
-  getCurrentSong() {
-    return this.songs[this.currentSongKey];
-  }
-
-  // 获取歌曲列表
-  getSongs() {
-    return this.songs;
-  }
-
   // 切换到指定页面的歌曲
   playSong(key) {
     if (this.songs[key]) {

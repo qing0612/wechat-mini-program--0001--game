@@ -29,13 +29,6 @@ class BuildingService {
     return null;
   }
 
-  getCollisionZones() {
-    return this.buildings.map(b => b.collisionZone);
-  }
-
-  getBuildingNames() {
-    return this.buildings.map(b => ({ id: b.id, name: b.name, nameEn: b.nameEn }));
-  }
 }
 
 module.exports = new BuildingService();

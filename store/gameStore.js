@@ -14,7 +14,8 @@ class GameStore {
       isRunning: false,
       currentBuilding: null,
       isDay: true, // 白天/晚上状态，默认白天
-      backpack: []
+      backpack: [],
+      sportsPlayer: { x: 0, y: 0, direction: 'down' } // 运动场玩家状态
     };
     this.listeners = [];
   }
@@ -71,8 +72,9 @@ class GameStore {
     this.setState({ isDay });
   }
 
-  resetPlayer() {
-    this.setState({ player: { x: 0, y: 0, direction: 'down' } });
+  // 更新运动场玩家位置
+  updateSportsPlayer(x, y, direction) {
+    this.setState({ sportsPlayer: { x, y, direction } });
   }
 
   addToBackpack(item) {

@@ -101,17 +101,17 @@ Page({
 
       const canvas = res[0].node;
       this.canvas = canvas;
-      const sys = wx.getSystemInfoSync();
-      const dpr = sys.pixelRatio || 2;
+      const winInfo = wx.getWindowInfo();
+      const dpr = winInfo.pixelRatio || 2;
 
       canvas.width = cssW * dpr;
       canvas.height = cssH * dpr;
       this.ctx = canvas.getContext('2d');
-      this.sysInfo = sys;
+      this.sysInfo = winInfo;
       this.viewW = cssW;
       this.viewH = cssH;
 
-      const jRadius = Math.min(sys.windowHeight * 0.15, 50);
+      const jRadius = Math.min(winInfo.windowHeight * 0.15, 50);
       this.joystick = new Joystick({ radius: jRadius });
       this.setData({ joystickBaseR: Math.round(jRadius) });
 
@@ -198,11 +198,11 @@ Page({
         if (cssW <= 0 || cssH <= 0) return;
         if (Math.abs(cssW - this.viewW) < 1 && Math.abs(cssH - this.viewH) < 1) return;
 
-        const sys = wx.getSystemInfoSync();
-        const dpr = sys.pixelRatio || 2;
+        const winInfo = wx.getWindowInfo();
+        const dpr = winInfo.pixelRatio || 2;
         this.canvas.width = cssW * dpr;
         this.canvas.height = cssH * dpr;
-        this.sysInfo = sys;
+        this.sysInfo = winInfo;
         this.viewW = cssW;
         this.viewH = cssH;
 

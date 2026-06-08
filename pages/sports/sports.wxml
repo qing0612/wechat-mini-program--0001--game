@@ -1,6 +1,6 @@
 <view class="sports-page">
   <image class="map-bg" src="/images/map/sports-bg.png" mode="aspectFill" />
-  <canvas id="playerCanvas" class="player-canvas" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" />
+  <canvas type="2d" id="playerCanvas" class="player-canvas" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" />
   
   <view class="back-btn" bindtap="goBack">
     <text>返回校园</text>

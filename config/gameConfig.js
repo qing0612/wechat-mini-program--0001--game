@@ -12,6 +12,14 @@ module.exports = {
     HEIGHT: 1093
   },
 
+  // 运动场地图配置
+  SPORTS_MAP: {
+    WIDTH: 800,
+    HEIGHT: 600,
+    SPAWN_X: 400,
+    SPAWN_Y: 300
+  },
+
   UI: {
     UPDATE_INTERVAL: 3,
     JOYSTICK_RADIUS: 45
