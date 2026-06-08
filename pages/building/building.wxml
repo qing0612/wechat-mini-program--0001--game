@@ -44,7 +44,7 @@
       <scroll-view scroll-y class="history-scroll">
         <view class="history-card">
           <text class="section-title">◆ 建筑历史 ◆</text>
-          <text class="history-text">{{building.historyText}}</text>
+          <text class="history-text" user-select="true">{{building.historyText}}</text>
         </view>
       </scroll-view>
       <view class="bottom-deco">═══════════════════</view>
