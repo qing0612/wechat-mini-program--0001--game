@@ -15,8 +15,8 @@ Page({
     seasonValues: ['spring', 'summer', 'autumn', 'winter'],
     seasonLabels: ['春季', '夏季', '秋季', '冬季'],
     seasonIndex: 0,
-    // 弹窗状态
-    showSeasonModal: false
+    // 下拉选择器状态
+    showSeasonSelector: false
   },
 
   onLoad() {
@@ -66,23 +66,15 @@ Page({
     gameStore.setIsDay(isDay);
   },
 
-  // 显示季节选择弹窗
-  showSeasonPicker() {
-    this.setData({ showSeasonModal: true });
+  // 切换季节选择器显示/隐藏
+  toggleSeasonSelector() {
+    this.setData({ 
+      showSeasonSelector: !this.data.showSeasonSelector 
+    });
   },
 
-  // 隐藏季节选择弹窗
-  hideSeasonPicker() {
-    this.setData({ showSeasonModal: false });
-  },
-
-  // 阻止事件冒泡
-  stopPropagation() {
-    // 空函数，用于阻止事件冒泡
-  },
-
-  // 选择季节
-  selectSeason(e) {
+  // 设置季节
+  setSeason(e) {
     const season = e.currentTarget.dataset.season;
     const seasonValues = ['spring', 'summer', 'autumn', 'winter'];
     const seasonIndex = seasonValues.indexOf(season);
@@ -90,7 +82,7 @@ Page({
     this.setData({ 
       season: season,
       seasonIndex: seasonIndex,
-      showSeasonModal: false
+      showSeasonSelector: false
     });
     gameStore.setSeason(season);
   },

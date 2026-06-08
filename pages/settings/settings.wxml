@@ -126,41 +126,29 @@
             {{season === 'spring' ? '春季' : season === 'summer' ? '夏季' : season === 'autumn' ? '秋季' : '冬季'}}
           </text>
         </view>
-        <view class="picker-btn" bindtap="showSeasonPicker">
+        <view class="picker-btn" bindtap="toggleSeasonSelector">
           <text class="picker-text">选择季节</text>
           <text class="picker-arrow">›</text>
         </view>
       </view>
 
-    </view>
-
-  </view>
-
-  <!-- 自定义季节选择弹窗 -->
-  <view class="season-picker-modal" wx:if="{{showSeasonModal}}" bindtap="hideSeasonPicker">
-    <view class="modal-mask" bindtap="hideSeasonPicker"></view>
-    <view class="modal-content" catchtap="stopPropagation">
-      <view class="modal-title">
-        <text class="title-text">选择季节</text>
-      </view>
-      <view class="season-grid">
-        <view class="season-item spring" bindtap="selectSeason" data-season="spring">
-          <text class="season-emoji">🌸</text>
-          <text class="season-name">春季</text>
+      <!-- 下拉式季节选择器 -->
+      <view class="season-selector" wx:if="{{showSeasonSelector}}">
+        <view class="selector-option" bindtap="setSeason" data-season="spring">
+          <text class="option-text">🌸 春季</text>
         </view>
-        <view class="season-item summer" bindtap="selectSeason" data-season="summer">
-          <text class="season-emoji">☀️</text>
-          <text class="season-name">夏季</text>
+        <view class="selector-option" bindtap="setSeason" data-season="summer">
+          <text class="option-text">☀️ 夏季</text>
         </view>
-        <view class="season-item autumn" bindtap="selectSeason" data-season="autumn">
-          <text class="season-emoji">🍂</text>
-          <text class="season-name">秋季</text>
+        <view class="selector-option" bindtap="setSeason" data-season="autumn">
+          <text class="option-text">🍂 秋季</text>
         </view>
-        <view class="season-item winter" bindtap="selectSeason" data-season="winter">
-          <text class="season-emoji">❄️</text>
-          <text class="season-name">冬季</text>
+        <view class="selector-option" bindtap="setSeason" data-season="winter">
+          <text class="option-text">❄️ 冬季</text>
         </view>
       </view>
+
     </view>
+
   </view>
 </view>
