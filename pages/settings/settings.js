@@ -9,7 +9,12 @@ Page({
     // 音量值 (0-1)
     volume: 1,
     // 日夜状态
-    isDay: true
+    isDay: true,
+    // 季节设置
+    season: 'spring',
+    seasonValues: ['spring', 'summer', 'autumn', 'winter'],
+    seasonLabels: ['春季', '夏季', '秋季', '冬季'],
+    seasonIndex: 0
   },
 
   onLoad() {
@@ -17,11 +22,15 @@ Page({
     audioManager.init();
     // 从音频管理器获取当前静音设置和音量（转换为0-100范围）
     const state = gameStore.getState();
+    const season = state.season || 'spring';
+    const seasonIndex = ['spring', 'summer', 'autumn', 'winter'].indexOf(season);
     this.setData({
       startMusicEnabled: audioManager.getMute('start'),
       mapMusicEnabled: audioManager.getMute('map'),
       volume: audioManager.volume * 100,
-      isDay: state.isDay
+      isDay: state.isDay,
+      season: season,
+      seasonIndex: seasonIndex
     });
   },
 
@@ -53,6 +62,18 @@ Page({
     const isDay = e.detail.value;
     this.setData({ isDay });
     gameStore.setIsDay(isDay);
+  },
+
+  // 季节切换
+  onSeasonChange(e) {
+    const index = parseInt(e.detail.value);
+    const seasonValues = ['spring', 'summer', 'autumn', 'winter'];
+    const season = seasonValues[index];
+    this.setData({ 
+      season: season,
+      seasonIndex: index
+    });
+    gameStore.setSeason(season);
   },
 
   // 返回上一页

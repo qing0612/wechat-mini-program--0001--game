@@ -30,6 +30,7 @@ class GameStore {
         isRunning: false,
         currentBuilding: null,
         isDay: true,
+        season: 'spring', // 季节设置：spring, summer, autumn, winter
         backpack: [],
         sportsPlayer: { x: 0, y: 0, direction: 'down' },
         saveOnQuit: true
@@ -47,6 +48,7 @@ class GameStore {
         isRunning: false,
         currentBuilding: null,
         isDay: true,
+        season: 'spring',
         backpack: [],
         sportsPlayer: { x: 0, y: 0, direction: 'down' },
         saveOnQuit: false
@@ -84,6 +86,7 @@ class GameStore {
       wx.setStorageSync('game_state', JSON.stringify({
         player: this.state.player,
         isDay: this.state.isDay,
+        season: this.state.season,
         backpack: this.state.backpack,
         sportsPlayer: this.state.sportsPlayer,
         saveOnQuit: this.state.saveOnQuit
@@ -98,6 +101,7 @@ class GameStore {
       const d = JSON.parse(raw);
       if (d.player) this.state.player = { ...this.state.player, ...d.player };
       if (typeof d.isDay === 'boolean') this.state.isDay = d.isDay;
+      if (['spring', 'summer', 'autumn', 'winter'].includes(d.season)) this.state.season = d.season;
       if (Array.isArray(d.backpack)) this.state.backpack = d.backpack;
       if (d.sportsPlayer) this.state.sportsPlayer = { ...this.state.sportsPlayer, ...d.sportsPlayer };
       if (typeof d.saveOnQuit === 'boolean') this.state.saveOnQuit = d.saveOnQuit;
@@ -138,6 +142,11 @@ class GameStore {
 
   setIsDay(isDay) {
     this.setState({ isDay });
+  }
+
+  // 设置季节
+  setSeason(season) {
+    this.setState({ season });
   }
 
   // 更新运动场玩家位置

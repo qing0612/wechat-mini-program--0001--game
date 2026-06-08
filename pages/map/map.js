@@ -6,6 +6,7 @@ const gameStore = require('../../store/gameStore.js');
 const gameConfig = require('../../config/gameConfig.js');
 const buildingService = require('../../services/buildingService.js');
 const audioManager = require('../../utils/audioManager.js');
+const WeatherEffect = require('../../utils/weatherEffect.js');
 
 const { PLAYER, MAP, UI } = gameConfig;
 
@@ -39,6 +40,7 @@ Page({
     this.canvasReady = false;
     this.resizeTimer = null;
     this._resizeHandler = null;
+    this.season = 'spring';
     // 重置模态框状态
     this.modalShowing = false;
     this.modalDismissed = false;
@@ -68,6 +70,8 @@ Page({
     this.player = { x: state.player.x, y: state.player.y };
     this.playerDir = state.player.direction;
     this.isDay = state.isDay;
+    this.season = state.season;
+    this._updateWeatherEffect();
   },
 
   onReady() {
@@ -111,6 +115,9 @@ Page({
       this.viewW = cssW;
       this.viewH = cssH;
 
+      this.weatherEffect = new WeatherEffect(canvas);
+      this.weatherEffect.init(canvas.width, canvas.height);
+
       const jRadius = Math.min(winInfo.windowHeight * 0.15, 50);
       this.joystick = new Joystick({ radius: jRadius });
       this.setData({ joystickBaseR: Math.round(jRadius) });
@@ -137,12 +144,30 @@ Page({
     this.mapImg.src = '/images/map-bg.png';
   },
 
+  _updateWeatherEffect() {
+    if (!this.weatherEffect) return;
+  
+    const weatherType = this.season === 'summer' ? 'rain' : 
+                        this.season === 'winter' ? 'snow' : 'none';
+  
+    this.weatherEffect.setType(weatherType);
+    if (weatherType !== 'none' && !this.weatherEffect.running) {
+      this.weatherEffect.start();
+    } else if (weatherType === 'none' && this.weatherEffect.running) {
+      this.weatherEffect.stop();
+    }
+},
+
   onShow() {
     console.log('Map page onShow');
 
     // 重置模态框状态（从其他页面返回时）
     this.modalShowing = false;
     this.modalDismissed = false;
+    // 在 onShow 中更新天气特效
+    const state = gameStore.getState();
+    this.season = state.season || 'spring';
+    this._updateWeatherEffect();
     // 标记刚从其他页面返回，避免立即触发建筑对话框
     this.justReturned = true;
     // 设置冷却期，防止立即重新触发建筑进入提示
@@ -153,7 +178,6 @@ Page({
     }, 2000); // 2秒冷却期
 
     // 从状态管理中恢复是否在触发区域的状态，这样返回时不会因为"进入"建筑区域而触发弹窗
-    const state = gameStore.getState();
     this.isInTriggerZone = state.player.inTriggerZone || false;
 
     // 确保游戏循环运行
@@ -242,6 +266,10 @@ Page({
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
+    }
+
+    if (this.weatherEffect) {
+      this.weatherEffect.stop();
     }
 
     if (this._resizeHandler) {
@@ -389,6 +417,16 @@ Page({
     drawPlayer(ctx, sp.x, sp.y, this.moving, this.anim.frameIndex, this.playerDir);
 
     ctx.restore();
+
+    // 渲染天气特效（在所有内容之上）
+    this._renderWeatherEffect();
+  },
+
+  _renderWeatherEffect() {
+    if (!this.weatherEffect || this.weatherEffect.type === 'none') return;
+    
+    this.weatherEffect.update();
+    this.weatherEffect.render();
   },
 
   drawPlaceholderMap(ctx, cam) {
