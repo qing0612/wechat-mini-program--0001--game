@@ -8,8 +8,9 @@
   
   <view class="game-time">{{gameTime}}</view>
 
-  <view class="joystick-container" wx:if="{{joystickVisible}}" style="left: {{joystickBaseX - joystickBaseR}}px; top: {{joystickBaseY - joystickBaseR}}px;">
-    <view class="joystick-base">
+  <!-- 全屏浮动摇杆 -->
+  <view class="joystick-area" wx:if="{{joystickVisible}}" style="left:{{joystickBaseX}}px;top:{{joystickBaseY}}px;">
+    <view class="joystick-base" style="width:{{joystickBaseR*2}}px;height:{{joystickBaseR*2}}px;">
       <view class="joystick-stick" style="transform: translate({{stickX}}px, {{stickY}}px);" />
     </view>
   </view>

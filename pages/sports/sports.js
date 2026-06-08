@@ -165,12 +165,37 @@ Page({
 
     ctx.save();
 
-    // 相机跟随玩家
-    const cam = computeCamera(this.player.x, this.player.y, this.viewW, this.viewH, this.mapW, this.mapH);
+    // 相机跟随玩家（处理地图尺寸小于视口的情况）
+    let camX = this.player.x - this.viewW / 2;
+    let camY = this.player.y - this.viewH / 2;
+    
+    // 边界检查
+    if (this.mapW <= this.viewW) {
+      camX = (this.mapW - this.viewW) / 2; // 居中
+    } else {
+      camX = Math.max(0, Math.min(camX, this.mapW - this.viewW));
+    }
+    
+    if (this.mapH <= this.viewH) {
+      camY = (this.mapH - this.viewH) / 2; // 居中
+    } else {
+      camY = Math.max(0, Math.min(camY, this.mapH - this.viewH));
+    }
+    
+    const cam = { x: camX, y: camY };
 
     // 绘制背景
     if (this.mapLoaded && this.mapImg) {
-      ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
+      // 根据地图尺寸和视口尺寸决定绘制方式
+      if (this.mapW <= this.viewW && this.mapH <= this.viewH) {
+        // 地图小于视口，居中绘制
+        const offsetX = (this.viewW - this.mapW) / 2;
+        const offsetY = (this.viewH - this.mapH) / 2;
+        ctx.drawImage(this.mapImg, 0, 0, this.mapW, this.mapH, offsetX, offsetY, this.mapW, this.mapH);
+      } else {
+        // 地图大于视口，裁剪绘制
+        ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
+      }
     } else {
       // 占位：绿色草地 + 网格
       ctx.fillStyle = '#3D6B24';
@@ -247,30 +272,14 @@ Page({
 
   onTouchStart(e) {
     const touch = e.touches[0];
-    const sys = wx.getSystemInfoSync();
-    // 使用当前 data 中的半径（已在 initCanvas 中根据屏幕尺寸更新）
-    const jRadius = this.data.joystickBaseR;
-    
-    // 固定摇杆在左下角（距离边缘各 jRadius + 20px）
-    const baseX = jRadius + 20;
-    const baseY = sys.windowHeight - jRadius - 20;
-    
-    // 检查触摸是否在摇杆区域附近（2倍半径范围内）
-    const touchX = touch.clientX;
-    const touchY = touch.clientY;
-    const dist = Math.sqrt(Math.pow(touchX - baseX, 2) + Math.pow(touchY - baseY, 2));
-    
-    // 只有触摸在摇杆区域附近才响应
-    if (dist < jRadius * 2) {
-      this.joystick.start({ ...touch, clientX: baseX, clientY: baseY });
-      this.setData({
-        joystickVisible: true,
-        joystickBaseX: baseX,
-        joystickBaseY: baseY,
-        stickX: touchX - baseX,
-        stickY: touchY - baseY
-      });
-    }
+    this.joystick.start(touch);
+    this.setData({
+      joystickVisible: true,
+      joystickBaseX: touch.clientX,
+      joystickBaseY: touch.clientY,
+      stickX: 0,
+      stickY: 0
+    });
   },
 
   onTouchMove(e) {

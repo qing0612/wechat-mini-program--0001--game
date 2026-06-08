@@ -43,16 +43,15 @@
   z-index: 100;
 }
 
-/* 固定位置摇杆 */
-.joystick-container {
+/* 浮动摇杆(跟随触摸位置,不拦截事件) */
+.joystick-area {
   position: absolute;
   z-index: 20;
   pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .joystick-base {
-  width: 100rpx;
-  height: 100rpx;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 35%,
     rgba(244,162,97,0.25) 0%,
@@ -74,12 +73,14 @@
     rgba(244,162,97,0.95) 0%,
     rgba(244,162,97,0.7) 100%
   );
+  border: 3rpx solid #f4a261;
   position: absolute;
-  top: 50%;
   left: 50%;
-  margin: -22rpx 0 0 -22rpx;
+  top: 50%;
+  margin-left: -22rpx;
+  margin-top: -22rpx;
+  transition: none;
   box-shadow:
-    0 4rpx 12rpx rgba(0,0,0,0.4),
-    inset 0 -4rpx 8rpx rgba(0,0,0,0.2),
-    inset 0 4rpx 8rpx rgba(255,255,255,0.3);
+    0 2rpx 6rpx rgba(0,0,0,0.4),
+    inset 0 2rpx 3rpx rgba(255,255,255,0.2);
 }
