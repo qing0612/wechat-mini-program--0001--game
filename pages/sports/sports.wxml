@@ -1,17 +1,16 @@
 <view class="sports-page">
-  <image
-    class="bg-image"
-    src="/images/map/sports-bg.png"
-    mode="aspectFill"
-    wx:if="{{!imgError}}"
-    binderror="onImgError"
-  />
-  <view class="bg-placeholder" wx:if="{{imgError}}">
-    <text class="placeholder-text">图片加载失败</text>
-    <text class="placeholder-hint">路径: /images/map/sports-bg.png</text>
-  </view>
+  <image class="map-bg" src="/images/map/sports-bg.png" mode="aspectFill" />
+  <canvas id="playerCanvas" class="player-canvas" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" />
+  
   <view class="back-btn" bindtap="goBack">
-    <text class="back-arrow">←</text>
-    <text class="back-text">返回校园</text>
+    <text>返回校园</text>
+  </view>
+  
+  <view class="game-time">{{gameTime}}</view>
+
+  <view class="joystick-container" wx:if="{{joystickVisible}}" style="left: {{joystickBaseX - joystickBaseR}}px; top: {{joystickBaseY - joystickBaseR}}px;">
+    <view class="joystick-base">
+      <view class="joystick-stick" style="transform: translate({{stickX}}px, {{stickY}}px);" />
+    </view>
   </view>
 </view>
