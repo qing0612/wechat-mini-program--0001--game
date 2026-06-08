@@ -283,11 +283,10 @@ Page({
         this.player.y = newY;
         this.moving = true;
         this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
-      } else {
-        // 实时更新状态管理，确保离开页面时保存的是最新位置
+        // 移动时更新状态管理
         gameStore.updatePlayerPos(this.player.x, this.player.y);
         gameStore.updatePlayerDirection(this.playerDir);
-
+      } else {
         this.moving = false;
       }
     }
