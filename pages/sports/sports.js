@@ -3,8 +3,12 @@ const { computeCamera, worldToScreen } = require('../../utils/camera.js');
 const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
 const gameStore = require('../../store/gameStore.js');
 const gameConfig = require('../../config/gameConfig.js');
+const { BUILDINGS } = require('../../data/buildings.js');
 
 const { PLAYER, SPORTS_MAP, UI } = gameConfig;
+
+// 获取运动场建筑的数据
+const sportsBuilding = BUILDINGS.find(b => b.id === 'sports');
 
 Page({
   data: {
@@ -108,7 +112,8 @@ Page({
     this.mapImg = this.canvas.createImage();
     this.mapImg.onload = () => { this.mapLoaded = true; };
     this.mapImg.onerror = () => { this.mapLoaded = false; };
-    this.mapImg.src = '/images/map/sports-bg.png';
+    // 使用建筑数据中的 interiorImage 属性，避免硬编码路径
+    this.mapImg.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.webp';
   },
 
   onShow() {
