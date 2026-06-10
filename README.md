@@ -99,6 +99,7 @@ triggerZone: { x: 实测X, y: 实测Y, w: 140, h: 110 }
 
 ## 项目结构
 
+```javascript
 小程序/
 ├─ app.json / app.js / app.wxss    # 全局配置(横屏/导航/页面注册)
 │
@@ -148,6 +149,7 @@ triggerZone: { x: 实测X, y: 实测Y, w: 140, h: 110 }
 │
 ├─ GUIDE.md                        # 建筑与人物添加指南(开发者参考)
 └─ project.config.json             # 微信项目配置(AppID/libVersion)
+```
 
 
 ## 技术要点
