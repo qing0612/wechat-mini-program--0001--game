@@ -98,22 +98,10 @@ Page({
     try {
       wx.removeStorageSync('game_state');
     } catch (e) {}
-    
-    // 重置为初始状态
-    gameStore.setState({
-      player: { 
-        x: gameConfig.PLAYER.SPAWN_X, 
-        y: gameConfig.PLAYER.SPAWN_Y, 
-        direction: 'down', 
-        inTriggerZone: false 
-      },
-      isRunning: false,
-      currentBuilding: null,
-      isDay: true,
-      backpack: [],
-      sportsPlayer: { x: 0, y: 0, direction: 'down' }
-    });
-    
+
+    // 调用 gameStore 的 resetGame：一次性重置玩家位置、背包、步数、徽章等所有状态
+    gameStore.resetGame();
+
     // 跳转到游戏地图
     wx.navigateTo({
       url: '/pages/map/map',

@@ -1,3 +1,7 @@
+// c:\Users\yibohe\Desktop\小程序-代码\app.js
+const cloudSync = require('./utils/cloudSync.js');
+const logger = require('./utils/logger.js');
+
 App({
   globalData: {},
   onLaunch() {
@@ -6,29 +10,44 @@ App({
     this.globalData.windowHeight = sys.windowHeight;
     this.globalData.pixelRatio = sys.pixelRatio || 2;
 
-    // 初始化实时日志管理器（线上排查问题用）
-    try {
-      this.globalData.logManager = wx.getRealtimeLogManager ? wx.getRealtimeLogManager() : null;
-    } catch (e) {}
+    // === 云开发初始化 ===
+    // 云环境 ID：请在微信开发者工具 → 云开发 → 开通后获取，并替换下面的字符串
+    // 例如：'cloud1-xxx'  或 'prod-xxx'
+    // 如果还没有开通云开发，云相关功能会自动降级（不影响使用）
+    const CLOUD_ENV = ''; // TODO: 在这里填入你的云开发环境 ID，如 'campus-tour-3gxxxxxxxxxxx'
+
+    if (wx.cloud && CLOUD_ENV) {
+      try {
+        wx.cloud.init({
+          env: CLOUD_ENV,
+          traceUser: true
+        });
+        this.globalData.cloudReady = true;
+        logger.info('app', 'cloud init ok', { env: CLOUD_ENV });
+      } catch (e) {
+        this.globalData.cloudReady = false;
+        logger.warn('app', 'cloud init failed', e && e.message);
+      }
+    } else {
+      this.globalData.cloudReady = false;
+      logger.info('app', 'cloud skipped', { reason: CLOUD_ENV ? 'base lib too low' : 'env not configured' });
+    }
+
+    // 云同步模块初始化（即使没配置云环境也无害）
+    cloudSync.init();
 
     // 隐私协议检查：用户未同意时触发平台授权流程
     this._checkPrivacy();
   },
 
-  // 全局 JS 错误捕获
+  // 全局 JS 错误捕获：统一走 logger.error 上报
   onError(msg) {
-    console.error('[App.onError]', msg);
-    if (this.globalData.logManager && this.globalData.logManager.error) {
-      this.globalData.logManager.error('JS_ERROR', msg);
-    }
+    logger.error('app', 'global onerror', msg);
   },
 
   // 未处理的 Promise 拒绝捕获
   onUnhandledRejection(res) {
-    console.warn('[App.onUnhandledRejection]', res && res.reason);
-    if (this.globalData.logManager && this.globalData.logManager.warn) {
-      this.globalData.logManager.warn('UNHANDLED_PROMISE', res && res.reason);
-    }
+    logger.warn('app', 'unhandled promise rejection', res && res.reason);
   },
 
   // 隐私协议检查：使用官方隐私接口
@@ -55,7 +74,6 @@ App({
 
     wx.getPrivacySetting({
       success: (res) => {
-        // needAuthorization 为 true 表示平台判定需要弹隐私协议
         if (res.needAuthorization) {
           wx.showModal({
             title: '用户隐私保护提示',
@@ -64,14 +82,12 @@ App({
             cancelText: '不同意',
             success: (modalRes) => {
               if (modalRes.confirm) {
-                // 打开平台配置的隐私协议页，用户在协议页点"同意"后由平台完成授权
                 wx.openPrivacyContract({
                   fail: () => {
                     wx.showToast({ title: '暂未配置隐私协议', icon: 'none' });
                   }
                 });
               } else {
-                // 用户拒绝时友好提示，不阻塞退出
                 wx.showToast({ title: '您已拒绝隐私协议，部分功能可能无法使用', icon: 'none' });
               }
             }

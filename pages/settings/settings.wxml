@@ -179,6 +179,34 @@
         <text class="link-arrow">›</text>
       </view>
 
+      <!-- 同步到云端 -->
+      <view class="setting-item link-item" bindtap="syncToCloud">
+        <view class="item-label">
+          <text class="label-text">同步进度到云端</text>
+        </view>
+        <text class="link-arrow">›</text>
+      </view>
+
+      <!-- 成就统计 -->
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">已探索建筑</text>
+        </view>
+        <text class="link-arrow">{{buildingsVisited}} 座</text>
+      </view>
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">已收集徽章</text>
+        </view>
+        <text class="link-arrow">{{badgesCollected}} 枚</text>
+      </view>
+      <view class="setting-item">
+        <view class="item-label">
+          <text class="label-text">总移动步数</text>
+        </view>
+        <text class="link-arrow">{{totalSteps}} 步</text>
+      </view>
+
       <!-- 客服入口 -->
       <view class="setting-item link-item">
         <view class="item-label">

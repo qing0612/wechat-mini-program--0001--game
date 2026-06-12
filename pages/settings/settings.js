@@ -16,13 +16,15 @@ Page({
     seasonLabels: ['春季', '夏季', '秋季', '冬季'],
     seasonIndex: 0,
     // 下拉选择器状态
-    showSeasonSelector: false
+    showSeasonSelector: false,
+    // 成就统计
+    buildingsVisited: 0,
+    badgesCollected: 0,
+    totalSteps: 0
   },
 
   onLoad() {
-    // 初始化音频管理器
     audioManager.init();
-    // 从音频管理器获取当前静音设置和音量（转换为0-100范围）
     const state = gameStore.getState();
     const season = state.season || 'spring';
     const seasonIndex = ['spring', 'summer', 'autumn', 'winter'].indexOf(season);
@@ -32,7 +34,10 @@ Page({
       volume: audioManager.volume * 100,
       isDay: state.isDay,
       season: season,
-      seasonIndex: seasonIndex
+      seasonIndex: seasonIndex,
+      buildingsVisited: (state.stats && state.stats.buildingsVisited) || (state.visitedBuildingIds ? state.visitedBuildingIds.length : 0),
+      badgesCollected: (state.stats && state.stats.badgesCollected) || (state.backpack ? state.backpack.length : 0),
+      totalSteps: (state.stats && state.stats.totalSteps) || 0
     });
   },
 
@@ -121,5 +126,10 @@ Page({
     wx.navigateTo({
       url: '/pages/privacy/privacy?tab=terms'
     });
+  },
+
+  // 手动同步进度到云端
+  syncToCloud() {
+    gameStore.forceSyncToCloud();
   }
 });

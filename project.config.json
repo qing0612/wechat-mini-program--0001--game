@@ -3,16 +3,16 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": ".claude"
+        "value": ".claude",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "README.md"
+        "value": "README.md",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "GUIDE.md"
+        "value": "GUIDE.md",
+        "type": "file"
       }
     ],
     "include": []
@@ -59,7 +59,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.15.2",
-  "appid": "wxc49e8fb890b359ec",
+  "appid": "wxe2a67cb24507dd31",
   "projectname": "campus-pixel",
   "condition": {},
   "editorSetting": {
