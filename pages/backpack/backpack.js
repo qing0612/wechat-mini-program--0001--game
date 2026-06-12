@@ -3,7 +3,8 @@ const gameStore = require('../../store/gameStore.js');
 Page({
   data: {
     items: [],
-    selectedItem: null
+    selectedItem: null,
+    imgErrors: {}
   },
 
   onLoad() {
@@ -22,7 +23,17 @@ Page({
     while (items.length < 16) {
       items.push(null);
     }
-    this.setData({ items });
+    this.setData({ items, imgErrors: {} });
+  },
+
+  // 物品图片加载失败处理
+  onItemImgError(e) {
+    const itemIndex = e.currentTarget.dataset.itemIndex;
+    const item = this.data.items[itemIndex];
+    if (!item) return;
+    const imgErrors = { ...this.data.imgErrors };
+    imgErrors[item.id] = true;
+    this.setData({ imgErrors });
   },
 
   selectItem(e) {

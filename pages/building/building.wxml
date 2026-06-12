@@ -4,6 +4,7 @@
     class="bg-image"
     src="{{building.interiorImage}}"
     mode="aspectFill"
+    webp="{{true}}"
     wx:if="{{!imgError}}"
     binderror="onImgError"
   />
@@ -54,7 +55,12 @@
   <!-- 徽章获得弹窗 -->
   <view class="badge-popup" wx:if="{{showBadgePopup}}" bindtap="closeBadgePopup">
     <view class="badge-content" catchtap="closeBadgePopup">
-      <image src="{{building.badge.image}}" mode="aspectFill" class="badge-icon" />
+      <image wx:if="{{!badgeImgError}}" src="{{building.badge.image}}" mode="aspectFill" class="badge-icon" webp="{{true}}" binderror="onBadgeImgError" />
+      <view wx:if="{{badgeImgError}}" class="badge-icon badge-icon-fallback">
+        <view class="badge-fallback-inner">
+          <text class="badge-fallback-text">★</text>
+        </view>
+      </view>
       <text class="badge-title">获得徽章！</text>
       <text class="badge-name">{{building.badge.name}}</text>
       <text class="badge-desc">{{building.badge.description}}</text>

@@ -21,8 +21,10 @@
         bindtap="selectItem"
         data-item-id="{{item.id}}">
         <view class="item-icon" wx:if="{{item}}">
-          <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" class="item-image" />
-          <view wx:else class="item-image" style="background-color: {{item.color}};"></view>
+          <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" class="item-image" webp="{{true}}" binderror="onItemImgError" data-item-index="{{index}}" />
+          <view wx:else class="item-image item-image-fallback">
+            <text class="item-fallback-icon">★</text>
+          </view>
           <view class="item-count" wx:if="{{item.count > 1}}">{{item.count}}</view>
         </view>
         <view class="item-slot-empty" wx:else>
@@ -34,7 +36,10 @@
     <!-- 选中物品详情 -->
     <view class="item-detail" wx:if="{{selectedItem}}">
       <view class="detail-header">
-        <view class="detail-icon" style="{{selectedItem.image ? 'background-image: url(' + selectedItem.image + '); background-size: cover;' : 'background-color: ' + selectedItem.color + ';'}}"></view>
+        <view wx:if="{{selectedItem.image && !imgErrors[selectedItem.id]}}" class="detail-icon" style="background-image: url('{{selectedItem.image}}'); background-size: cover;"></view>
+        <view wx:else class="detail-icon detail-icon-fallback">
+          <text class="detail-fallback-icon">{{selectedItem.id.startsWith('badge_') ? '★' : '■'}}</text>
+        </view>
         <view class="detail-info">
           <text class="detail-name">{{selectedItem.name}}</text>
           <text class="detail-count">数量: {{selectedItem.count}}</text>

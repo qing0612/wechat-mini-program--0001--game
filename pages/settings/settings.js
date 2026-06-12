@@ -94,5 +94,18 @@ Page({
         wx.redirectTo({ url: '/pages/start/start' });
       }
     });
+  },
+
+  // 打开隐私政策（调用微信内置隐私协议页面）
+  openPrivacy() {
+    if (wx.openPrivacyContract) {
+      wx.openPrivacyContract({
+        fail: () => {
+          wx.showToast({ title: '暂未配置隐私协议', icon: 'none' });
+        }
+      });
+    } else {
+      wx.showToast({ title: '微信版本不支持', icon: 'none' });
+    }
   }
 });

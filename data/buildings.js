@@ -6,8 +6,8 @@ const BUILDINGS = [
     triggerZone: { x: 1190, y: 395, w: 120, h: 110 },
     // 碰撞区域（不可穿越的建筑实体），略大于触发区，覆盖建筑轮廓
     collisionZone: { x: 1155, y: 400, w: 150, h: 140 },
-    interiorImage: '/images/buildings/library.webp',
-    badge: { id: 'badge_library', name: '图书馆徽章', image: '/images/badges/library-badge.jpg', description: '探索图书馆获得的荣誉徽章' },
+    interiorImage: '/images/buildings/library.png',
+    badge: { id: 'badge_library', name: '图书馆徽章', image: '/images/badges/library-badge.png', description: '探索图书馆获得的荣誉徽章' },
      historyText: '河北师范大学图书馆发端于1902年（顺天中学堂藏书室）和1906年（北洋女师范学堂图书部），历经百余年发展。\n\n' +
       '现图书馆于2013年9月在新校区开放，总建筑面积4.5万平方米，阅览座位3800余席，是一座综合性现代化图书馆。\n\n' +
       '馆藏规模：\n' +
@@ -28,7 +28,7 @@ const BUILDINGS = [
     triggerZone: { x: 1480, y: 950, w: 60, h: 110 },
     collisionZone: { x: 1470, y: 935, w: 80, h: 140 },
     interiorImage: '/images/buildings/pont.png',
-    badge: { id: 'badge_pont', name: '天桥徽章', image: '/images/badges/pont-badge.webp', description: '漫步天桥获得的荣誉徽章' },
+    badge: { id: 'badge_pont', name: '天桥徽章', image: '/images/badges/pont-badge.png', description: '漫步天桥获得的荣誉徽章' },
     historyText: '河北师范大学天桥历史介绍\n\n'+
 
     '天桥是河北师范大学新校区的标志性建筑之一，位于校园核心区域，连接教学区与生活区。'
@@ -39,8 +39,8 @@ const BUILDINGS = [
     nameEn: 'School of Software',
     triggerZone: { x: 860, y: 650, w: 160, h: 90 },
     collisionZone: { x: 845, y: 635, w: 190, h: 120 },
-    interiorImage: '/images/buildings/software.webp',
-    badge: { id: 'badge_software', name: '软件学院徽章', image: '/images/badges/software-badge.webp', description: '参观软件学院获得的荣誉徽章' },
+    interiorImage: '/images/buildings/software.png',
+    badge: { id: 'badge_software', name: '软件学院徽章', image: '/images/badges/software-badge.png', description: '参观软件学院获得的荣誉徽章' },
      historyText: '河北师范大学软件学院是河北省首家省级示范性软件学院，也是省内第一所"笔记本大学"。\n\n' +
       '作为学校推进教育改革的重要试点，学院目前累计为社会培养了5000余名高素质软件人才。\n\n' +
       '成立时间：\n2007年5月31日正式挂牌成立。其办学历史可追溯至2003年获省教育厅批准，2007年首届学生入学。\n\n' +
@@ -67,8 +67,8 @@ const BUILDINGS = [
     nameEn: 'Museum',
     triggerZone: { x: 1230, y: 520, w: 120, h: 110 },
     collisionZone: { x: 1215, y: 495, w: 150, h: 140 },
-    interiorImage: '/images/buildings/museum.webp',
-    badge: { id: 'badge_museum', name: '博物馆徽章', image: '/images/badges/museum-badge.jpg', description: '探索博物馆获得的荣誉徽章' },
+    interiorImage: '/images/buildings/museum.png',
+    badge: { id: 'badge_museum', name: '博物馆徽章', image: '/images/badges/museum-badge.png', description: '探索博物馆获得的荣誉徽章' },
     historyText: '河北师范大学博物馆历史介绍\n\n' +
       '河北师范大学博物馆的历史可追溯至20世纪50年代的文物室,2015年新馆建成开放,是一座承载校史文脉、兼具科普与教育功能的综合性大学博物馆。\n\n' +
   
@@ -107,7 +107,7 @@ const BUILDINGS = [
     triggerZone: { x: 455, y: 530, w: 120, h: 110 },
     collisionZone: { x: 440, y: 515, w: 150, h: 140 },
     interiorImage: '/images/buildings/lecture.png',
-    badge: { id: 'badge_lecture', name: '真知讲堂徽章', image: '/images/badges/lecture-badge.webp', description: '聆听真知获得的荣誉徽章' },
+    badge: { id: 'badge_lecture', name: '真知讲堂徽章', image: '/images/badges/lecture-badge.png', description: '聆听真知获得的荣誉徽章' },
     historyText: '河北师范大学真知讲堂历史介绍\n\n'+
     '真知讲堂是河北师范大学校级核心文化地标，得名于校训"怀天下，求真知"，'+
 
@@ -143,8 +143,8 @@ const BUILDINGS = [
     nameEn: 'Sports Center',
     triggerZone: { x: 1260, y: 131, w: 150, h: 120 },
     collisionZone: { x: 185, y: 685, w: 180, h: 150 },
-    interiorImage: '/images/map/sports-bg.webp',
-    badge: { id: 'badge_sports', name: '体育场馆徽章', image: '/images/badges/sports-badge.webp', description: '进入体育场馆获得的荣誉徽章' },
+    interiorImage: '/images/map/sports-bg.png',
+    badge: { id: 'badge_sports', name: '体育场馆徽章', image: '/images/badges/pont-badge.png', description: '进入体育场馆获得的荣誉徽章' },
     // 特殊标识：进入此建筑跳转到运动场地图
     isSportsField: true,
     historyText: '河北师范大学体育场馆介绍\n\n'+

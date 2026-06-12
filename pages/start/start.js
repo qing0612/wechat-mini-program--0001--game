@@ -134,4 +134,21 @@ Page({
     });
   },
 
+  // 分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '河北师范大学像素校园',
+      desc: '用像素风探索美丽校园！',
+      path: '/pages/start/start',
+      imageUrl: '/images/start-bg.png'
+    };
+  },
+
+  // 分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '河北师范大学像素校园 - 用像素风探索美丽校园！',
+      imageUrl: '/images/start-bg.png'
+    };
+  }
 });

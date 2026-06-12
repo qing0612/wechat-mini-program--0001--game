@@ -5,6 +5,7 @@ Page({
   data: {
     building: { name: '', nameEn: '', interiorImage: '', historyText: '', badge: null },
     imgError: false,
+    badgeImgError: false,
     badgeEarned: false,
     showBadgePopup: false
   },
@@ -24,6 +25,10 @@ Page({
 
   onImgError() {
     this.setData({ imgError: true });
+  },
+
+  onBadgeImgError() {
+    this.setData({ badgeImgError: true });
   },
 
   onBack() {

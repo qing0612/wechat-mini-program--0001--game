@@ -113,7 +113,7 @@ Page({
     this.mapImg.onload = () => { this.mapLoaded = true; };
     this.mapImg.onerror = () => { this.mapLoaded = false; };
     // 使用建筑数据中的 interiorImage 属性，避免硬编码路径
-    this.mapImg.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.webp';
+    this.mapImg.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.png';
   },
 
   onShow() {

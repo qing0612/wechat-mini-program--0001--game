@@ -150,5 +150,38 @@
 
     </view>
 
+    <!-- 其他设置区域 -->
+    <view class="settings-section">
+      <view class="section-title">
+        <view class="section-icon">
+          <view class="other-icon">
+            <view class="other-dot"></view>
+            <view class="other-dot"></view>
+            <view class="other-dot"></view>
+          </view>
+        </view>
+        <text class="section-text">其他</text>
+      </view>
+
+      <!-- 隐私政策 -->
+      <view class="setting-item link-item" bindtap="openPrivacy">
+        <view class="item-label">
+          <text class="label-text">用户隐私保护指引</text>
+        </view>
+        <text class="link-arrow">›</text>
+      </view>
+
+      <!-- 客服入口 -->
+      <view class="setting-item link-item">
+        <view class="item-label">
+          <text class="label-text">联系客服</text>
+        </view>
+        <button class="contact-btn" open-type="contact" session-from="settings">
+          <text class="link-arrow">›</text>
+        </button>
+      </view>
+
+    </view>
+
   </view>
 </view>

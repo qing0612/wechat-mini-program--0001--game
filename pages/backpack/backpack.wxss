@@ -201,3 +201,33 @@
   transform: scale(0.98);
   opacity: 0.9;
 }
+
+/* 物品图片加载失败时的 fallback 图标 */
+.item-image-fallback {
+  background: linear-gradient(135deg, rgba(244, 162, 97, 0.1) 0%, rgba(244, 162, 97, 0.2) 100%);
+  border: 2rpx dashed rgba(244, 162, 97, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-fallback-icon {
+  font-size: 44rpx;
+  color: #f4a261;
+  text-shadow: 0 0 6rpx rgba(244, 162, 97, 0.6);
+}
+
+/* 详情区 fallback 图标 */
+.detail-icon-fallback {
+  background: linear-gradient(135deg, rgba(244, 162, 97, 0.1) 0%, rgba(244, 162, 97, 0.2) 100%);
+  border: 2rpx dashed rgba(244, 162, 97, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-fallback-icon {
+  font-size: 48rpx;
+  color: #f4a261;
+  text-shadow: 0 0 6rpx rgba(244, 162, 97, 0.6);
+}

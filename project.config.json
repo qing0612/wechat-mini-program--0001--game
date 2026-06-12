@@ -1,7 +1,20 @@
 {
   "description": "河北师范大学校园像素风漫游小程序",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": ".claude"
+      },
+      {
+        "type": "file",
+        "value": "README.md"
+      },
+      {
+        "type": "file",
+        "value": "GUIDE.md"
+      }
+    ],
     "include": []
   },
   "setting": {
