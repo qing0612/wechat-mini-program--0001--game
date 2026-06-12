@@ -96,16 +96,30 @@ Page({
     });
   },
 
-  // 打开隐私政策（调用微信内置隐私协议页面）
+  // 打开隐私政策：优先跳转到小程序内置隐私政策页面
+  // 同时提供调起微信"用户隐私保护指引"协议页的能力（需在开发者后台配置）
   openPrivacy() {
-    if (wx.openPrivacyContract) {
-      wx.openPrivacyContract({
-        fail: () => {
-          wx.showToast({ title: '暂未配置隐私协议', icon: 'none' });
+    wx.navigateTo({
+      url: '/pages/privacy/privacy?tab=privacy',
+      fail: () => {
+        // 兜底：调起微信官方隐私协议页
+        if (wx.openPrivacyContract) {
+          wx.openPrivacyContract({
+            fail: () => {
+              wx.showToast({ title: '暂未配置隐私协议', icon: 'none' });
+            }
+          });
+        } else {
+          wx.showToast({ title: '微信版本不支持', icon: 'none' });
         }
-      });
-    } else {
-      wx.showToast({ title: '微信版本不支持', icon: 'none' });
-    }
+      }
+    });
+  },
+
+  // 打开用户协议：跳转到内置隐私政策页面的"用户协议"标签
+  openTerms() {
+    wx.navigateTo({
+      url: '/pages/privacy/privacy?tab=terms'
+    });
   }
 });

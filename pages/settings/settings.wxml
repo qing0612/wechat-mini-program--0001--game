@@ -171,6 +171,14 @@
         <text class="link-arrow">›</text>
       </view>
 
+      <!-- 用户协议 -->
+      <view class="setting-item link-item" bindtap="openTerms">
+        <view class="item-label">
+          <text class="label-text">用户协议</text>
+        </view>
+        <text class="link-arrow">›</text>
+      </view>
+
       <!-- 客服入口 -->
       <view class="setting-item link-item">
         <view class="item-label">

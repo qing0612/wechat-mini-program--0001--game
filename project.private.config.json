@@ -17,7 +17,8 @@
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true,
     "bigPackageSizeSupport": true,
-    "useIsolateContext": true
+    "useIsolateContext": true,
+    "__usePrivacyCheck__": true
   },
   "libVersion": "3.15.2",
   "condition": {}

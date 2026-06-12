@@ -5,7 +5,8 @@
     "pages/building/building",
     "pages/sports/sports",
     "pages/settings/settings",
-    "pages/backpack/backpack"
+    "pages/backpack/backpack",
+    "pages/privacy/privacy"
   ],
   "window": {
     "navigationStyle": "custom",
