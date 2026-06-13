@@ -1,0 +1,63 @@
+{
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "globals": {
+    "wx": "readonly",
+    "App": "readonly",
+    "Page": "readonly",
+    "Component": "readonly",
+    "Behavior": "readonly",
+    "getApp": "readonly",
+    "getCurrentPages": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "no-extra-semi": "error",
+    "no-var": "error",
+    "prefer-const": "warn",
+    "eqeqeq": ["warn", "always"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "semi": ["error", "always"],
+    "semi-spacing": ["error", { "before": false, "after": true }],
+    "semi-style": ["error", "last"],
+    "no-trailing-spaces": "warn",
+    "no-mixed-spaces-and-tabs": "error",
+    "no-multiple-empty-lines": ["warn", { "max": 2 }],
+    "eol-last": "warn",
+    "indent": ["error", 2, { "SwitchCase": 1, "ignoredNodes": ["TemplateLiteral"] }],
+    "no-tabs": "error",
+    "linebreak-style": ["warn", "unix"],
+    "quotes": ["warn", "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
+    "quote-props": ["warn", "as-needed"],
+    "comma-dangle": ["warn", "never"],
+    "comma-spacing": ["error", { "before": false, "after": true }],
+    "comma-style": ["error", "last"],
+    "key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
+    "keyword-spacing": ["error", { "before": true, "after": true }],
+    "space-before-function-paren": ["warn", "always"],
+    "space-in-parens": ["error", "never"],
+    "space-before-blocks": "error",
+    "space-infix-ops": "error",
+    "object-curly-spacing": ["warn", "always"],
+    "array-bracket-spacing": ["warn", "never"],
+    "no-irregular-whitespace": "error",
+    "prefer-arrow-callback": "off",
+    "arrow-parens": "off",
+    "no-prototype-builtins": "warn",
+    "no-case-declarations": "warn",
+    "no-undef": "error",
+    "no-use-before-define": ["warn", { "functions": false, "classes": true, "variables": true }]
+  }
+}

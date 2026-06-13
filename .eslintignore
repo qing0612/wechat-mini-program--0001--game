@@ -1,0 +1,11 @@
+node_modules/
+.claude/
+.git/
+dist/
+build/
+miniprogram_npm/
+package-lock.json
+yarn.lock
+*.miniapp.json
+*.wxml
+*.wxss

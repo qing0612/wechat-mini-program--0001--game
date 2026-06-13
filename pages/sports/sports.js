@@ -18,7 +18,40 @@ Page({
     joystickBaseR: UI.JOYSTICK_RADIUS,
     joystickBaseX: 0,
     joystickBaseY: 0,
-    joystickVisible: false
+    joystickVisible: false,
+    loadProgress: 0,
+    loadVisible: true,
+    loadStageText: '资源加载中...'
+  },
+
+  _startProgress() {
+    if (this._progressTimer) clearInterval(this._progressTimer);
+    this._progressTimer = setInterval(() => {
+      let current = this.data.loadProgress;
+      let next = current;
+      if (current < 30) {
+        next = current + 2;
+        if (next >= 30) this.setData({ loadStageText: '初始化画布...' });
+      } else if (current < 70) {
+        next = current + 1.5;
+        if (next >= 50) this.setData({ loadStageText: '加载运动场...' });
+        if (this.mapLoaded && next > 70) next = 70;
+      } else if (current < 100 && this.mapLoaded) {
+        next = current + 3;
+        if (next >= 85) this.setData({ loadStageText: '准备就绪...' });
+      } else if (current < 100 && !this.mapLoaded && current < 90) {
+        next = current + 0.5;
+      }
+      if (next >= 100) {
+        next = 100;
+        clearInterval(this._progressTimer);
+        this._progressTimer = null;
+        setTimeout(() => {
+          this.setData({ loadVisible: false });
+        }, 300);
+      }
+      if (next !== current) this.setData({ loadProgress: Math.round(next) });
+    }, 50);
   },
 
   onLoad() {
@@ -101,6 +134,7 @@ Page({
       this.tryLoadMap();
 
       this.canvasReady = true;
+      this._startProgress();
       this.running = true;
       this.lastTime = 0;
       this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
@@ -111,12 +145,18 @@ Page({
     if (!this.canvas) return;
     this.mapImg = this.canvas.createImage();
     this.mapImg.onload = () => { this.mapLoaded = true; };
-    this.mapImg.onerror = () => { this.mapLoaded = false; };
+    this.mapImg.onerror = () => {
+      this.mapLoaded = false;
+      this.mapLoaded = true;
+    };
     // 使用建筑数据中的 interiorImage 属性，避免硬编码路径
     this.mapImg.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.png';
   },
 
   onShow() {
+    this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
+    setTimeout(() => this._startProgress(), 50);
+
     // 恢复游戏循环
     if (this.canvas && !this.running) {
       this.running = true;
@@ -168,7 +208,7 @@ Page({
     if (!ctx) return;
 
     // Canvas 2D 已在初始化时设置了 scale，直接使用 CSS 尺寸
-    ctx.fillStyle = '#2d5a1e';
+    ctx.fillStyle = '#0f0f1a';
     ctx.fillRect(0, 0, this.viewW, this.viewH);
 
     ctx.save();
@@ -180,10 +220,10 @@ Page({
     if (this.mapLoaded && this.mapImg) {
       ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
     } else {
-      // 占位：绿色草地 + 网格
-      ctx.fillStyle = '#3D6B24';
+      // 占位：深色背景 + 细网格
+      ctx.fillStyle = '#0f0f1a';
       ctx.fillRect(0, 0, this.viewW, this.viewH);
-      ctx.strokeStyle = '#2E5518';
+      ctx.strokeStyle = '#1e1e2a';
       ctx.lineWidth = 1;
       const step = 80;
       for (let x = -(cam.x % step); x < this.viewW; x += step) {
@@ -244,6 +284,10 @@ Page({
 
   _stop() {
     this.running = false;
+    if (this._progressTimer) {
+      clearInterval(this._progressTimer);
+      this._progressTimer = null;
+    }
     gameStore.updateSportsPlayer(this.player.x, this.player.y, this.playerDir);
     if (this.timerInterval) {
       clearInterval(this.timerInterval);

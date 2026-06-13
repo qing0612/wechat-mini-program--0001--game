@@ -1,0 +1,21 @@
+node_modules/
+npm-debug.log
+yarn-error.log
+
+.cache/
+.temp/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+miniprogram_npm/
+
+# Env
+.env
+.env.local

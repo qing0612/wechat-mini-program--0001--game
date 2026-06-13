@@ -13,6 +13,50 @@
       {
         "value": "GUIDE.md",
         "type": "file"
+      },
+      {
+        "value": ".eslintrc.json",
+        "type": "file"
+      },
+      {
+        "value": ".eslintignore",
+        "type": "file"
+      },
+      {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": ".gitignore",
+        "type": "file"
+      },
+      {
+        "value": ".vscode",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": "test",
+        "type": "folder"
+      },
+      {
+        "value": "docs",
+        "type": "folder"
+      },
+      {
+        "value": "LICENSE",
+        "type": "file"
       }
     ],
     "include": []

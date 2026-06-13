@@ -22,7 +22,10 @@ Page({
     minimapPlayerY: 50,
     coordX: 0,
     coordY: 0,
-    gameTime: '00:00' // 游戏计时器
+    gameTime: '00:00',
+    loadProgress: 0,
+    loadVisible: true,
+    loadStageText: '资源加载中...'
   },
 
   onLoad() {
@@ -125,6 +128,9 @@ Page({
       this.tryLoadMap();
       this.canvasReady = true;
 
+      // 启动进度条
+      this._startProgress();
+
       // 启动游戏循环
       this.running = true;
       gameStore.startGame();
@@ -133,13 +139,46 @@ Page({
     });
   },
 
+  _startProgress() {
+    if (this._progressTimer) clearInterval(this._progressTimer);
+    this._progressTimer = setInterval(() => {
+      let current = this.data.loadProgress;
+      let next = current;
+      if (current < 30) {
+        next = current + 2;
+        if (next >= 30) this.setData({ loadStageText: '初始化画布...' });
+      } else if (current < 70) {
+        next = current + 1.5;
+        if (next >= 50) this.setData({ loadStageText: '加载地图资源...' });
+        if (this.mapLoaded && next > 70) next = 70;
+      } else if (current < 100 && this.mapLoaded) {
+        next = current + 3;
+        if (next >= 85) this.setData({ loadStageText: '准备就绪...' });
+      } else if (current < 100 && !this.mapLoaded && current < 90) {
+        next = current + 0.5;
+      }
+      if (next >= 100) {
+        next = 100;
+        clearInterval(this._progressTimer);
+        this._progressTimer = null;
+        setTimeout(() => {
+          this.setData({ loadVisible: false });
+        }, 300);
+      }
+      if (next !== current) this.setData({ loadProgress: Math.round(next) });
+    }, 50);
+  },
+
   tryLoadMap() {
     if (!this.canvas) return;
     this.mapImg = this.canvas.createImage();
-    this.mapImg.onload = () => { this.mapLoaded = true; };
+    this.mapImg.onload = () => {
+      this.mapLoaded = true;
+    };
     this.mapImg.onerror = () => {
       this.mapLoaded = false;
       console.warn('地图图片加载失败: /images/map-bg.png');
+      this.mapLoaded = true;
     };
     this.mapImg.src = '/images/map-bg.png';
   },
@@ -160,6 +199,10 @@ Page({
 
   onShow() {
     console.log('Map page onShow');
+
+    // 从其他页面返回时重新显示过渡进度条
+    this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
+    setTimeout(() => this._startProgress(), 50);
 
     // 重置模态框状态（从其他页面返回时）
     this.modalShowing = false;
@@ -256,6 +299,10 @@ Page({
 
   cleanup() {
     this.running = false;
+    if (this._progressTimer) {
+      clearInterval(this._progressTimer);
+      this._progressTimer = null;
+    }
     gameStore.stopGame();
     gameStore.updatePlayerPos(this.player.x, this.player.y);
     gameStore.updatePlayerDirection(this.playerDir);
@@ -430,10 +477,10 @@ Page({
   },
 
   drawPlaceholderMap(ctx, cam) {
-    ctx.fillStyle = '#3D6B24';
+    ctx.fillStyle = '#0f0f1a';
     ctx.fillRect(0, 0, this.viewW, this.viewH);
 
-    ctx.strokeStyle = '#2E5518';
+    ctx.strokeStyle = '#1e1e2a';
     ctx.lineWidth = 1;
     const step = 80;
     for (let x = -(cam.x % step); x < this.viewW; x += step) {
@@ -456,18 +503,15 @@ Page({
     ctx.moveTo(0, 600 - cam.y); ctx.lineTo(MAP.WIDTH - cam.x, 600 - cam.y);
     ctx.stroke();
 
-    ctx.fillStyle = '#4A8A2E';
+    ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(200 - cam.x, 200 - cam.y, 300, 200);
     ctx.fillRect(1400 - cam.x, 300 - cam.y, 250, 180);
     ctx.fillRect(300 - cam.x, 700 - cam.y, 200, 150);
 
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#5a5a6e';
     ctx.font = '16px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('触摸任意位置开始移动', this.viewW / 2, this.viewH / 2);
-    ctx.font = '12px monospace';
-    ctx.fillStyle = '#ccc';
-    ctx.fillText('将像素化图一保存为 images/map-bg.png', this.viewW / 2, this.viewH / 2 + 20);
+    ctx.fillText('地图加载中...', this.viewW / 2, this.viewH / 2);
   },
 
   drawBuildingZones(ctx, cam) {

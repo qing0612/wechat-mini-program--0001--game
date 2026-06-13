@@ -113,7 +113,6 @@ Page({
 
   // 继续上一次游戏
   _continueGame() {
-    // 使用 gameStore 中已恢复的历史数据，直接跳转
     wx.navigateTo({
       url: '/pages/map/map',
       fail: () => {

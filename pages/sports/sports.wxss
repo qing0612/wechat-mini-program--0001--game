@@ -2,7 +2,140 @@
   width: 100vw;
   height: 100vh;
   position: relative;
-  background: #1a1a2e;
+  background: #0f0f1a;
+}
+
+/* 带进度条的加载过渡画面：消除切换瞬间的颜色闪烁 */
+.map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0f0f1a;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(244,162,97,0.08) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(244,162,97,0.02) 3px, rgba(244,162,97,0.02) 4px);
+  pointer-events: none;
+}
+
+.load-container {
+  position: relative;
+  width: 70%;
+  max-width: 500rpx;
+  text-align: center;
+  padding: 40rpx 30rpx;
+  z-index: 1;
+}
+
+.load-title {
+  font-size: 36rpx;
+  color: #f4a261;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  margin-bottom: 16rpx;
+  font-family: monospace;
+  text-shadow: 0 2rpx 0 rgba(0,0,0,0.3), 2rpx 2rpx 8rpx rgba(244,162,97,0.3);
+}
+
+.load-subtitle {
+  font-size: 24rpx;
+  color: rgba(244,162,97,0.7);
+  margin-bottom: 40rpx;
+  font-family: monospace;
+  letter-spacing: 1rpx;
+}
+
+.progress-bar-outer {
+  width: 100%;
+  height: 20rpx;
+  background: #1e1e2a;
+  border: 2rpx solid #2a2a3e;
+  border-radius: 4rpx;
+  position: relative;
+  overflow: hidden;
+  padding: 2rpx;
+  box-shadow: inset 0 2rpx 4rpx rgba(0,0,0,0.5), 0 0 12rpx rgba(244,162,97,0.1);
+}
+
+.progress-bar-outer::before {
+  content: '';
+  position: absolute;
+  top: 2rpx;
+  left: 2rpx;
+  right: 2rpx;
+  bottom: 2rpx;
+  background:
+    repeating-linear-gradient(90deg, transparent 0, transparent 8rpx, rgba(255,255,255,0.03) 8rpx, rgba(255,255,255,0.03) 9rpx);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(180deg, #ffc88a 0%, #f4a261 50%, #d88a4a 100%);
+  border-radius: 2rpx;
+  transition: width 80ms linear;
+  position: relative;
+  box-shadow: 0 0 10rpx rgba(244,162,97,0.6), inset 0 1rpx 0 rgba(255,255,255,0.3);
+}
+
+.progress-bar-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
+  border-radius: 2rpx 2rpx 0 0;
+}
+
+.load-percent {
+  font-size: 28rpx;
+  color: #f4a261;
+  margin-top: 20rpx;
+  font-family: monospace;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.load-footer {
+  margin-top: 40rpx;
+  display: flex;
+  justify-content: center;
+  gap: 14rpx;
+}
+
+.pixel-dot {
+  width: 12rpx;
+  height: 12rpx;
+  background: #f4a261;
+  border-radius: 2rpx;
+  animation: pixelBlink 1.2s ease-in-out infinite;
+  box-shadow: 0 0 6rpx rgba(244,162,97,0.5);
+}
+
+.pixel-dot:nth-child(2) { animation-delay: 0.2s; }
+.pixel-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pixelBlink {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 .map-bg {
@@ -20,6 +153,7 @@
   top: 0;
   left: 0;
   z-index: 10;
+  background: #0f0f1a;
 }
 
 .back-btn {

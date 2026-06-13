@@ -1,4 +1,20 @@
 <view class="sports-page">
+  <!-- 带进度条的加载过渡画面：消除切换瞬间的颜色闪烁 -->
+  <view class="map-overlay" wx:if="{{loadVisible}}">
+    <view class="load-container">
+      <view class="load-title">河北师范大学 · 运动场</view>
+      <view class="load-subtitle">{{loadStageText}}</view>
+      <view class="progress-bar-outer">
+        <view class="progress-bar-inner" style="width: {{loadProgress}}%;"></view>
+      </view>
+      <view class="load-percent">{{loadProgress}}%</view>
+      <view class="load-footer">
+        <view class="pixel-dot"></view>
+        <view class="pixel-dot"></view>
+        <view class="pixel-dot"></view>
+      </view>
+    </view>
+  </view>
   <canvas type="2d" id="playerCanvas" class="player-canvas" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" />
   
   <view class="back-btn" bindtap="goBack">
