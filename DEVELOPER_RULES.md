@@ -12,7 +12,12 @@
 
 1. **第一步永远是：读完本文件 DEVELOPER_RULES.md**
 
-2. **阅读所有相关文件的完整内容，再动手修改**
+2. **阅读三个文档的正确顺序**：
+   - 第一次接触项目：先读 `README.md`（了解项目是什么、怎么运行）
+   - 要改代码/加功能：再读 `GUIDE.md`（了解具体操作指南）
+   - 动手写代码前：**必须读 DEVELOPER_RULES.md（本文件）**（避免踩历史坑）
+
+3. **阅读所有相关文件的完整内容，再动手修改**
    - 修改配置前，必须先读 `app.json`、`project.config.json` 的当前完整内容
    - 修改页面前，必须先读该页面的 `.js`、`.wxml`、`.wxss`、`.json` 四个文件
    - 修改数据前，必须先读 `data/buildings.js` 和 `data/buildingHistory.js` 的完整内容
@@ -20,18 +25,18 @@
    - 修改工具类前，必须先读对应 `utils/xxx.js` 的完整内容
    - 修改地图/页面前，必须先读 `config/gameConfig.js`（出生点、地图尺寸等关键参数）
 
-3. **先确认文件实际存在，再写路径**
+4. **先确认文件实际存在，再写路径**
    - 涉及图片、音频等资源路径时，必须先用文件搜索确认该文件**实际存在**于哪个目录
    - 写路径前先看一遍 `images/`、`audio/`、`data/` 目录的实际内容
    - **禁止**在不确认文件存在的情况下写死路径
    - **禁止**引用本文件底部"图片文件清单"中不存在的文件
 
-4. **路径格式：永远以 `/` 开头**
+5. **路径格式：永远以 `/` 开头**
    - 正确：`/images/buildings/library.png`
    - 错误：`images/buildings/library.png`、`./images/buildings/library.png`
    - 页面间跳转 URL：`/pages/settings/settings`
 
-5. **先确认本文件中的规则是否覆盖了你要做的修改**
+6. **先确认本文件中的规则是否覆盖了你要做的修改**
    - 每次修改前回顾"设计决策速查"表和"常见问题速查表"
    - 做了与既有决策相反的修改 = 高风险，必须有充分理由
 
@@ -286,17 +291,182 @@
 
 ```
 1. 阅读本文件 DEVELOPER_RULES.md  ← 第一步永远是这个
-2. 阅读要修改的所有相关文件的完整内容
-3. 确认资源文件是否存在（搜索 images/、audio/、data/ 目录）
-4. 回顾上方「设计决策速查」中是否有相关历史决策
-5. 制定最小改动方案
-6. 修改代码
-7. 检查：是否破坏了数据一致性规则？是否影响了其他模块？
-8. 开发者工具编译验证
-9. 真机预览验证
-10. 如修改了规则性的内容，同步更新本文件 DEVELOPER_RULES.md
-11. 告知用户已完成的修改 + 需要用户手动操作的步骤
+2. 阅读 README.md 了解项目全貌（如果是第一次接触）
+3. 阅读 GUIDE.md 了解具体操作指南（如果涉及建筑/角色/地图等改动）
+4. 阅读要修改的所有相关文件的完整内容
+5. 确认资源文件是否存在（搜索 images/、audio/、data/ 目录）
+6. 回顾上方"设计决策速查"中是否有相关历史决策
+7. 制定最小改动方案
+8. 修改代码
+9. 检查：是否破坏了数据一致性规则？是否影响了其他模块？
+10. 开发者工具编译验证（清缓存 → 全部清除 → 编译）
+11. 真机预览验证（扫码在手机上测试修改的功能）
+12. 执行 lint 检查：`npm run lint`，如有问题执行 `npm run lint:fix`
+13. 如修改了规则性的内容，同步更新本文件 DEVELOPER_RULES.md
+14. 按下方「Gitee 协作流程」提交代码并发起 PR
+15. Code Review 通过后合并
 ```
+
+---
+
+## 🌿 Gitee 协作流程（团队协作必须遵守）
+
+### 分支策略
+
+| 分支 | 用途 | 创建方式 | 合并方式 |
+|------|------|---------|---------|
+| `master` / `main` | 主分支，始终可运行、可发布 | 项目初始即有 | **仅通过 PR 合并**，禁止直接 push |
+| `develop` | 开发集成分支，整合所有功能 | 从 master 切出 | 团队成员可直接提交小改动；大改动通过 PR |
+| `feature/xxx` | 功能分支 | `git checkout -b feature/xxx develop` | PR 合并到 develop，合并后删除 |
+| `hotfix/xxx` | 紧急修复分支 | `git checkout -b hotfix/xxx master` | PR 同时合并到 master 和 develop |
+
+> **命名建议**：feature 分支用简短英文描述，如 `feature/map-smooth-scroll`、`feature/badge-system`；hotfix 用 Bug 编号或简短描述，如 `hotfix/map-crash-issue-12`。
+
+### 标准 Git 工作流（每一步都要执行）
+
+```bash
+# ============ 1. 克隆与初始化 ============
+git clone https://gitee.com/[你的用户名]/[项目仓库名].git
+cd [项目目录]
+git remote -v              # 确认 origin 指向 Gitee
+npm install                # 安装开发依赖（eslint/jest）
+
+# ============ 2. 同步最新代码（每天上班第一件事） ============
+git checkout develop
+git pull origin develop    # 拉取团队最新代码
+
+# ============ 3. 创建功能分支 ============
+git checkout -b feature/add-gym-building
+
+# ============ 4. 开发与本地验证 ============
+# ... 修改代码 ...
+npm run lint:fix           # 统一代码风格（必须执行）
+npm test                   # 运行单元测试（如有）
+# 微信开发者工具：清缓存 → 全部清除 → 编译，确认页面正常
+
+# ============ 5. 提交代码 ============
+git status                 # 检查改动文件列表，确认没有提交不该提交的
+git diff                   # 检查具体改动
+git add -A                 # 或精准 git add 具体文件
+git commit -m "feat: 添加体育馆建筑与徽章，包含 triggerZone 和 collisionZone"
+# 注意：一次 commit 只做一件事，消息用中文描述具体改动
+
+# ============ 6. 推送到 Gitee ============
+git pull origin develop    # 推送前先合并 develop 的最新代码，避免冲突
+# 如有冲突，手动解决后 git add + git commit
+git push origin feature/add-gym-building
+
+# ============ 7. 发起 Pull Request ============
+# 浏览器打开 Gitee 项目 → Pull Requests → 新建 Pull Request
+# 源分支：feature/add-gym-building
+# 目标分支：develop
+# 标题：feat: 添加体育馆建筑与徽章
+# 描述：
+#   - 改动文件：data/buildings.js, data/buildingHistory.js, images/buildings/gym.png
+#   - 实现功能：新增体育馆建筑，包含触发区、碰撞区、历史文案和徽章
+#   - 测试建议：走到体育馆入口 → 点击"进入" → 确认徽章获得 → 背包查看
+#   - @reviewer1 @reviewer2 请审核
+
+# ============ 8. Code Review ============
+# - 收到 Review 意见后，在同一分支修改并 push（无需新建分支）
+# - 再次 commit 并 push，PR 自动更新
+# - 所有 Comment 都需回复（「已修改」/「保留原方案，理由是...」）
+
+# ============ 9. 合并到 develop ============
+# Review 通过后，由 Reviewer 或项目负责人点击「合并」
+# 推荐使用 Squash Merge（合并为一个 commit，保持历史简洁）
+# 合并后在 Gitee 删除 feature 分支
+
+# ============ 10. 本地清理 ============
+git checkout develop
+git pull origin develop
+git branch -d feature/add-gym-building   # 删除本地已合并分支
+```
+
+### 提交信息规范（必须遵守，影响 Gitee 搜索和自动生成日志）
+
+**格式**：`<type>: <subject>`
+
+| type | 含义 | 使用场景 |
+|------|------|---------|
+| `feat` | 新增功能 | 添加新建筑、新页面、新徽章、新系统 |
+| `fix` | Bug 修复 | 修复崩溃、修复显示异常、修复逻辑错误 |
+| `docs` | 文档更新 | 修改 README.md、GUIDE.md、DEVELOPER_RULES.md |
+| `style` | 代码风格调整 | 统一缩进、引号、分号等（不影响逻辑） |
+| `refactor` | 代码重构 | 重构函数结构、拆分文件、优化性能（不新增/不修复功能） |
+| `test` | 添加/修改测试 | 新增测试用例、修改现有测试 |
+| `chore` | 构建/工具链/配置 | 更新 package.json、修改 ESLint 规则、更新依赖版本 |
+
+**好的 commit 示例**：
+- `feat: 添加体育馆建筑与徽章，包含 triggerZone 和 collisionZone`
+- `fix: 修复从运动场返回主校园时玩家位置错乱`
+- `docs: 更新 GUIDE.md 徽章系统说明，补充双地图坐标独立存储规则`
+- `style: 统一所有 JS 文件为单引号 + 2 空格缩进`
+
+**坏的 commit 示例（避免）**：
+- `update` / `修改` / `fix bug` → 信息太少，无法检索
+- 一个 commit 同时改建筑数据 + 改页面逻辑 + 改文档 → 拆成多个 commit
+
+### Code Review（代码评审）清单
+
+每次发起 PR 前，自检以下项目：
+
+| 检查项 | 说明 | 状态 |
+|--------|------|------|
+| `npm run lint` 无 error | warning 也要尽量消除 | ⬜ |
+| 路径以 `/` 开头 | `data/buildings.js` 中的图片/徽章路径 | ⬜ |
+| 路径对应文件实际存在 | 检查 `images/` 目录 | ⬜ |
+| gameStore 字段改动已同步 `_save()` / `_restore()` | 新增字段要确保持久化正常 | ⬜ |
+| 不修改 `visitedBuildingIds`（该字段从未真实使用） | 用 `backpack.length` 替代 | ⬜ |
+| 不使用分包（subPackages） | 当前 7 个页面无需分包 | ⬜ |
+| 不将 `__usePrivacyCheck__` 放在 `app.json` | 仅在 `project.config.json` 中 | ⬜ |
+| 新增建筑时，同时添加了历史文案到 `buildingHistory.js` | 两个文件同步修改 | ⬜ |
+| 功能在微信开发者工具中实际验证 | 不提交未测试的代码 | ⬜ |
+| commit 信息符合规范 | type + 中文描述 | ⬜ |
+
+### 处理冲突的正确方式
+
+```bash
+# 场景：feature 分支推送时，develop 已有新代码
+git checkout feature/add-gym-building
+git pull origin develop        # 合并 develop 的最新改动
+# 如果出现 CONFLICT，打开冲突文件：
+#   <<<<<<< HEAD （你的改动）
+#   ... 冲突内容 ...
+#   =======
+#   ... develop 上的改动 ...
+#   >>>>>>> develop
+# 手动选择保留哪一方的代码（或两方合并），然后：
+git add 冲突的文件
+git commit -m "merge: 合并 develop 最新改动"
+git push origin feature/add-gym-building
+```
+
+> 如果冲突过多，说明分支太久没同步，建议改为 `git rebase develop` 逐个解决冲突，但 rebase 会改写历史，仅在你是该分支唯一开发者时使用。
+
+### 标签与版本发布
+
+```bash
+# 当 develop 上的功能集合成一个可发布版本时
+git checkout master
+git merge develop
+git tag -a v1.2.0 -m "版本 1.2.0：新增体育馆建筑、双地图系统、进度条过渡画面"
+git push origin master --tags
+```
+
+> 版本号遵循 **语义化版本（SemVer）**：`主版本号.次版本号.修订号`
+> - 主版本号：不兼容的 API 更改（很少触发，小程序页面结构大变）
+> - 次版本号：向下兼容的功能性新增（新增建筑、新增系统）
+> - 修订号：向下兼容的问题修正（Bug 修复、性能优化）
+
+### Gitee 项目管理
+
+- **Issues**：所有功能建议、Bug 报告、讨论都在 Gitee Issues 发起
+  - 使用标签分类：`bug` / `feature` / `documentation` / `performance` / `question`
+  - 关联到对应 Milestone（版本里程碑）
+- **Milestones**：按版本号管理，如 `v1.2.0`、`v1.3.0`，每个里程碑关联一组要完成的 Issues
+- **Wiki**：会议纪要、设计讨论、非代码类文档放在 Gitee Wiki
+- **PR 模板**：在 Gitee 项目设置中添加 `Pull Request 模板`，让提交者按模板填写改动说明
 
 ---
 
