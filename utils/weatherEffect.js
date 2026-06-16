@@ -80,11 +80,11 @@ class WeatherEffect {
 
   render() {
     if (this.type === 'none') return;
-    
-    // 不调用 clearRect，由主循环负责清空画布
-    
+
+    this.ctx.save();
+
     if (this.type === 'rain') {
-      this.ctx.strokeStyle = 'rgba(174, 194, 224, 0.3)';
+      this.ctx.strokeStyle = 'rgba(174, 194, 224, 0.4)';
       this.ctx.lineWidth = 1;
       this.particles.forEach(p => {
         this.ctx.globalAlpha = p.opacity;
@@ -96,13 +96,14 @@ class WeatherEffect {
     } else if (this.type === 'snow') {
       this.particles.forEach(p => {
         this.ctx.globalAlpha = p.opacity;
-        this.ctx.fillStyle = '#fff';
+        this.ctx.fillStyle = '#ffffff';
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         this.ctx.fill();
       });
     }
-    this.ctx.globalAlpha = 1;
+
+    this.ctx.restore();
   }
 
   start() {

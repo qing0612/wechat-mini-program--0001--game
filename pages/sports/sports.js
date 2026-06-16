@@ -128,7 +128,17 @@ Page({
     if (this.timer) this.timer.start();
   },
 
-  onHide() { this._cleanup(); },
+  onHide() {
+    // 仅暂停游戏循环，不销毁资源（用户可能还会回来）
+    this.running = false;
+    if (this.timer) this.timer.stop();
+    if (this.playerCtrl && gameStore) {
+      const p = this.playerCtrl.getPlayerPos();
+      const d = this.playerCtrl.getPlayerDir();
+      if (p) gameStore.updateSportsPlayer(p.x, p.y, d);
+    }
+  },
+
   onUnload() { this._cleanup(); },
 
   _cleanup() {

@@ -188,13 +188,6 @@ class GameStore {
     this.notify();
   }
 
-  updateSportsPlayer(x, y, direction) {
-    this.sportsPlayer.x = x;
-    this.sportsPlayer.y = y;
-    if (direction) this.sportsPlayer.direction = direction;
-    this.notify();
-  }
-
   // === 背包 / 徽章 ===
   addToBackpack(item) {
     const result = this.backpack.add(item);
@@ -209,6 +202,13 @@ class GameStore {
     this.backpack.remove(itemId);
     this.stats.syncFromBackpack(this.backpack.count());
     this.notify();
+  }
+
+  decrementFromBackpack(itemId) {
+    const result = this.backpack.decrement(itemId);
+    this.stats.syncFromBackpack(this.backpack.count());
+    this.notify();
+    return result;
   }
 
   getBackpack() {

@@ -16,16 +16,17 @@
     <view class="items-grid">
       <view 
         wx:for="{{items}}" 
-        wx:key="id" 
+        wx:for-item="slot"
+        wx:key="_key"
         class="item-slot"
         bindtap="selectItem"
-        data-item-id="{{item.id}}">
-        <view class="item-icon" wx:if="{{item}}">
-          <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" class="item-image" webp="{{true}}" binderror="onItemImgError" data-item-index="{{index}}" />
+        data-item-id="{{slot.item.id}}">
+        <view class="item-icon" wx:if="{{slot.item}}">
+          <image wx:if="{{slot.item.image}}" src="{{slot.item.image}}" mode="aspectFill" class="item-image" webp="{{true}}" binderror="onItemImgError" data-item-index="{{index}}" />
           <view wx:else class="item-image item-image-fallback">
             <text class="item-fallback-icon">★</text>
           </view>
-          <view class="item-count" wx:if="{{item.count > 1}}">{{item.count}}</view>
+          <view class="item-count" wx:if="{{slot.item.count > 1}}">{{slot.item.count}}</view>
         </view>
         <view class="item-slot-empty" wx:else>
           <view class="empty-icon"></view>

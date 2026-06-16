@@ -28,10 +28,10 @@ class Backpack {
     if (!item || !item.id) return false;
     const existing = this._items.find((it) => it.id === item.id);
     if (existing) {
-      existing.count = (existing.count || 1) + 1;
+      existing.count = (existing.count || 1) + (item.count || 1);
       return { item: { ...existing }, isNew: false };
     }
-    const entry = { ...item, count: 1 };
+    const entry = { ...item, count: item.count || 1 };
     this._items.push(entry);
     return { item: entry, isNew: true };
   }

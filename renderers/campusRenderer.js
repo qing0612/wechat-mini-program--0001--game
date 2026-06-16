@@ -5,11 +5,26 @@ const { worldToScreen } = require('../utils/camera.js');
 
 const TRIGGER_COLORS = ['#FF6B35', '#4ECDC4', '#FFE66D', '#A8D8EA'];
 
-function renderCampus(ctx, options) {
-  const { cam, mapImg, mapLoaded, isDay, viewW, viewH, dpr } = options;
+function _seasonTint(season, isDay) {
+  // 每个季节的底色 + 覆盖遮罩颜色
+  const tints = {
+    spring: { bg: '#f5faf0', overlay: 'rgba(144, 238, 144, 0.12)' },
+    summer: { bg: '#e8f4fc', overlay: 'rgba(135, 206, 235, 0.15)' },
+    autumn: { bg: '#fdf5e6', overlay: 'rgba(222, 184, 135, 0.18)' },
+    winter: { bg: '#f0f4f8', overlay: 'rgba(200, 220, 240, 0.20)' }
+  };
+  const base = tints[season] || tints.spring;
+  if (!isDay) {
+    return { bg: '#000000', overlay: 'rgba(0, 0, 0, 0.6)' };
+  }
+  return base;
+}
 
-  // 背景清屏（根据日夜模式选择底色）
-  ctx.fillStyle = isDay ? '#ffffff' : '#000000';
+function renderCampus(ctx, options) {
+  const { cam, mapImg, mapLoaded, isDay, viewW, viewH, dpr, season } = options;
+  const tint = _seasonTint(season || 'spring', isDay);
+
+  ctx.fillStyle = tint.bg;
   ctx.fillRect(0, 0, viewW * dpr, viewH * dpr);
 
   ctx.save();
@@ -17,12 +32,12 @@ function renderCampus(ctx, options) {
 
   if (mapLoaded && mapImg) {
     ctx.drawImage(mapImg, cam.x, cam.y, viewW, viewH, 0, 0, viewW, viewH);
-    if (!isDay) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    if (tint.overlay) {
+      ctx.fillStyle = tint.overlay;
       ctx.fillRect(0, 0, viewW, viewH);
     }
   } else {
-    _drawPlaceholder(ctx, cam, viewW, viewH, options.mapW, options.mapH);
+    _drawPlaceholder(ctx, cam, viewW, viewH, options.mapW, options.mapH, season || 'spring');
   }
   ctx.restore();
 }
@@ -51,11 +66,19 @@ function renderBuildingZones(ctx, options) {
   ctx.restore();
 }
 
-function _drawPlaceholder(ctx, cam, viewW, viewH, mapW, mapH) {
+function _drawPlaceholder(ctx, cam, viewW, viewH, mapW, mapH, season) {
+  const seasonColors = {
+    spring: { grid: '#2d3a2a', border: '#8B4513', road: '#c8b896', building: '#3d4a35' },
+    summer: { grid: '#1e3a4a', border: '#4682B4', road: '#9db8d0', building: '#2d4a5a' },
+    autumn: { grid: '#3a2e1a', border: '#8B4513', road: '#d4b896', building: '#4a3a2a' },
+    winter: { grid: '#2a3040', border: '#708090', road: '#e8e8f0', building: '#3a4050' }
+  };
+  const c = seasonColors[season] || seasonColors.spring;
+
   ctx.fillStyle = '#0f0f1a';
   ctx.fillRect(0, 0, viewW, viewH);
 
-  ctx.strokeStyle = '#1e1e2a';
+  ctx.strokeStyle = c.grid;
   ctx.lineWidth = 1;
   const step = 80;
   for (let x = -(cam.x % step); x < viewW; x += step) {
@@ -71,13 +94,11 @@ function _drawPlaceholder(ctx, cam, viewW, viewH, mapW, mapH) {
     ctx.stroke();
   }
 
-  // 地图边界
-  ctx.strokeStyle = '#8B4513';
+  ctx.strokeStyle = c.border;
   ctx.lineWidth = 4;
   ctx.strokeRect(-cam.x, -cam.y, mapW, mapH);
 
-  // 交叉道路
-  ctx.strokeStyle = '#A0A070';
+  ctx.strokeStyle = c.road;
   ctx.lineWidth = 16;
   ctx.beginPath();
   ctx.moveTo(1000 - cam.x, 0);
@@ -88,13 +109,12 @@ function _drawPlaceholder(ctx, cam, viewW, viewH, mapW, mapH) {
   ctx.lineTo(mapW - cam.x, 600 - cam.y);
   ctx.stroke();
 
-  // 建筑占位
-  ctx.fillStyle = '#1a1a2e';
+  ctx.fillStyle = c.building;
   ctx.fillRect(200 - cam.x, 200 - cam.y, 300, 200);
   ctx.fillRect(1400 - cam.x, 300 - cam.y, 250, 180);
   ctx.fillRect(300 - cam.x, 700 - cam.y, 200, 150);
 
-  ctx.fillStyle = '#5a5a6e';
+  ctx.fillStyle = '#888';
   ctx.font = '16px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('地图加载中...', viewW / 2, viewH / 2);

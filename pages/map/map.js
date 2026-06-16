@@ -161,6 +161,11 @@ Page({
   },
 
   onShow() {
+    // 从 gameStore 刷新最新状态（用户可能在其他页面改了季节/日夜）
+    const state = gameStore.getState();
+    this._season = state.season || this._season;
+    this._isDay = state.isDay;
+
     this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
     setTimeout(() => {
       if (this.progress) this.progress.start();
@@ -170,7 +175,9 @@ Page({
     if (this.buildingCtrl) {
       this.buildingCtrl.onShowReturn();
     }
-    if (this._weather) this._weather.setSeason(this._season);
+    if (this._weather) {
+      this._weather.setSeason(this._season);
+    }
 
     // 恢复游戏循环
     if (this.canvas && !this.running) {
@@ -182,7 +189,16 @@ Page({
   },
 
   onHide() {
-    this._cleanup();
+    // 仅暂停游戏循环，不销毁资源（用户可能还会回来）
+    this.running = false;
+    if (this.timer) this.timer.stop();
+    // 保存玩家位置
+    if (this.playerCtrl && gameStore) {
+      const p = this.playerCtrl.getPlayerPos();
+      const pd = this.playerCtrl.getPlayerDir();
+      if (p) gameStore.updatePlayerPos(p.x, p.y);
+      if (pd) gameStore.updatePlayerDirection(pd);
+    }
   },
 
   onUnload() {
@@ -268,6 +284,7 @@ Page({
       mapImg: this.mapImg,
       mapLoaded: this.mapLoaded,
       isDay: this._isDay,
+      season: this._season,
       viewW: this.viewW,
       viewH: this.viewH,
       dpr: this.dpr,

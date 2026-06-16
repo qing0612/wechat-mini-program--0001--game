@@ -18,10 +18,13 @@ Page({
   // 加载背包数据
   loadBackpack() {
     const backpack = gameStore.getBackpack();
-    // 填充到16个槽位
-    const items = [...backpack];
-    while (items.length < 16) {
-      items.push(null);
+    const items = [];
+    for (let i = 0; i < 16; i++) {
+      const item = backpack[i] || null;
+      items.push({
+        _key: 'slot_' + i,
+        item: item
+      });
     }
     this.setData({ items, imgErrors: {} });
   },
@@ -29,10 +32,10 @@ Page({
   // 物品图片加载失败处理
   onItemImgError(e) {
     const itemIndex = e.currentTarget.dataset.itemIndex;
-    const item = this.data.items[itemIndex];
-    if (!item) return;
+    const slot = this.data.items[itemIndex];
+    if (!slot || !slot.item) return;
     const imgErrors = { ...this.data.imgErrors };
-    imgErrors[item.id] = true;
+    imgErrors[slot.item.id] = true;
     this.setData({ imgErrors });
   },
 
@@ -42,8 +45,8 @@ Page({
       this.setData({ selectedItem: null });
       return;
     }
-    const item = this.data.items.find(i => i && i.id === itemId);
-    this.setData({ selectedItem: item });
+    const slot = this.data.items.find(s => s.item && s.item.id === itemId);
+    this.setData({ selectedItem: slot ? slot.item : null });
   },
 
   useItem() {
@@ -65,27 +68,20 @@ Page({
       icon: 'success'
     });
 
-    // 更新物品数量
-    const items = this.data.items.map(i => {
-      if (i && i.id === item.id) {
-        return { ...i, count: i.count - 1 };
-      }
-      return i;
-    });
-
-    // 如果数量为0，设为空并从 gameStore 移除
-    const newItems = items.map(i => {
-      if (i && i.count <= 0) {
-        gameStore.removeFromBackpack(i.id);
-        return null;
-      }
-      return i;
-    });
+    // 通过 gameStore 减少数量（自动持久化）
+    const result = gameStore.decrementFromBackpack(item.id);
+    const stillHas = result && !result.removed;
     
-    this.setData({ 
-      items: newItems,
-      selectedItem: newItems.find(i => i && i.id === item.id) || null
-    });
+    // 重新从 gameStore 加载背包数据
+    this.loadBackpack();
+    
+    // 如果物品还在（仍有剩余数量），保持选中
+    if (stillHas) {
+      const slot = this.data.items.find(s => s.item && s.item.id === item.id);
+      this.setData({ selectedItem: slot ? slot.item : null });
+    } else {
+      this.setData({ selectedItem: null });
+    }
   },
 
   dropItem() {
@@ -107,9 +103,9 @@ Page({
       content: `确定要丢弃${item.name}吗？`,
       success: (res) => {
         if (res.confirm) {
-          // 从 gameStore 移除
+          // 从 gameStore 移除（自动持久化）
           gameStore.removeFromBackpack(item.id);
-          // 更新本地显示
+          // 重新加载显示
           this.loadBackpack();
           this.setData({ selectedItem: null });
           wx.showToast({

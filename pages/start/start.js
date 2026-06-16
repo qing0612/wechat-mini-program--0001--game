@@ -19,6 +19,8 @@ Page({
   },
 
   onShow() {
+    // 从 map 页面返回时，清除进入游戏的遮罩状态
+    this.setData({ entering: false, enterProgress: 0 });
     audioManager.playWithMuteCheck('start');
   },
 
