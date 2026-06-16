@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="河北师范大学像素风校园漫游小程序 - 控制像素狮子探索六大校园建筑，收集专属徽章，体验日夜与四季变化。">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>河北师范大学 · 像素校园漫游小程序</title>
+
+    <!-- ===== CSS 模块（按加载顺序：变量 → 布局 → 内容 → 响应式） ===== -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/hero.css">
+    <link rel="stylesheet" href="css/sections.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- ============ 导航栏 ============ -->
+    <nav>
+        <a href="#top" class="logo" aria-label="返回首页">
+            <div class="logo-icon">校</div>
+            <span>HEBTU · PIXEL</span>
+        </a>
+        <button class="menu-toggle" id="menuToggle" aria-label="切换导航菜单" aria-expanded="false">≡</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#about">关于项目</a></li>
+            <li><a href="#features">核心功能</a></li>
+            <li><a href="#buildings">探索建筑</a></li>
+            <li><a href="#tech">技术亮点</a></li>
+            <li><a href="#preview">页面预览</a></li>
+            <li><a href="#download">获取体验</a></li>
+        </ul>
+    </nav>
+
+    <!-- ============ 首页横幅 ============ -->
+    <section class="hero" id="top">
+        <div class="hero-pixels" id="heroPixels" aria-hidden="true"></div>
+        <div class="hero-content">
+            <div class="hero-badge">★ 微信小程序 ★</div>
+            <h1>河北师范大学</h1>
+            <p class="hero-subtitle">像素风校园漫游 · PIXEL CAMPUS</p>
+            <p class="hero-desc">控制像素狮子角色，探索六大校园建筑<br>收集专属徽章，体验日夜与四季变化</p>
+            <div class="hero-cta">
+                <a href="#features" class="btn btn-primary">了解功能</a>
+                <a href="#download" class="btn btn-secondary">扫码体验</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 关于项目 ============ -->
+    <section class="about reveal" id="about">
+        <div class="container">
+            <h2 class="section-title">关于项目</h2>
+            <p class="section-subtitle">— ABOUT THE PROJECT —</p>
+
+            <div class="about-content">
+                <div class="about-text">
+                    <p><strong>河北师范大学像素校园漫游小程序</strong>，是一款基于微信小程序平台开发的像素风格校园探索应用。玩家将操控一只可爱的像素狮子，在校园地图中自由行走。</p>
+                    <p>走近图书馆、博物馆、软件学院、天桥、真知讲堂、体育场馆等 <strong>6 座标志性建筑</strong>，即可进入查看建筑历史介绍，并获得独特的收藏徽章。</p>
+                    <p>支持 <strong>日夜切换</strong>、<strong>四季变换</strong>（夏季自动下雨、冬季自动飘雪）、<strong>背景音乐</strong>、<strong>云端存档</strong> 等丰富功能，让每一次探索都充满新鲜感。</p>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">探索建筑</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">独立地图</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">4</div>
+                        <div class="stat-label">季节切换</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">★</div>
+                        <div class="stat-label">徽章收集</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 核心功能（卡片由 js/render.js 动态渲染） ============ -->
+    <section class="features reveal" id="features">
+        <div class="container">
+            <h2 class="section-title">核心功能</h2>
+            <p class="section-subtitle">— FEATURES —</p>
+
+            <div class="features-intro">
+                <strong>HEBTU 像素校园漫游</strong> 基于 Canvas 2D 开发，融合校园实景与像素游戏玩法。
+                以下为项目全部核心游玩与技术功能。
+                <span class="features-lightweight">★ 全部功能原生 JS 实现，无第三方游戏引擎，轻量化加载，小程序包体积可控 ★</span>
+            </div>
+
+            <!-- 功能卡片容器：由 render.js 注入 -->
+            <div class="feature-grid" id="featureGrid"></div>
+
+            <!-- 演示预览区 -->
+            <div class="feature-showcase">
+                <h3>功能演示 · FEATURE DEMO</h3>
+                <div class="showcase-sub">— 图文结合展示核心玩法与技术亮点 —</div>
+
+                <div class="showcase-grid">
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">🌗</span>
+                        <div class="showcase-caption">昼夜对比</div>
+                    </div>
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">❄️</span>
+                        <div class="showcase-caption">四季雪景</div>
+                    </div>
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">🏛️</span>
+                        <div class="showcase-caption">建筑弹窗</div>
+                    </div>
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">🎒</span>
+                        <div class="showcase-caption">徽章背包</div>
+                    </div>
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">🎮</span>
+                        <div class="showcase-caption">摇杆操控</div>
+                    </div>
+                    <div class="showcase-item" role="button" tabindex="0">
+                        <span class="showcase-icon">⏳</span>
+                        <div class="showcase-caption">加载过渡</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部 CTA -->
+            <div class="features-cta">
+                <a href="#download" class="btn btn-primary">立即体验小程序</a>
+                <a href="#preview" class="btn btn-secondary">查看完整功能演示</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 建筑展示（卡片由 render.js 动态渲染） ============ -->
+    <section class="buildings reveal" id="buildings">
+        <div class="container">
+            <h2 class="section-title">探索建筑</h2>
+            <p class="section-subtitle">— CAMPUS BUILDINGS —</p>
+            <div class="building-grid" id="buildingGrid"></div>
+        </div>
+    </section>
+
+    <!-- ============ 技术亮点（时间轴由 render.js 动态渲染） ============ -->
+    <section class="tech reveal" id="tech">
+        <div class="container">
+            <h2 class="section-title">技术亮点</h2>
+            <p class="section-subtitle">— TECHNICAL HIGHLIGHTS —</p>
+            <div class="tech-timeline" id="techTimeline"></div>
+        </div>
+    </section>
+
+    <!-- ============ 页面预览（卡片由 render.js 动态渲染） ============ -->
+    <section class="preview reveal" id="preview">
+        <div class="container">
+            <h2 class="section-title">页面预览</h2>
+            <p class="section-subtitle">— SCREENSHOTS —</p>
+            <div class="preview-grid" id="previewGrid"></div>
+        </div>
+    </section>
+
+    <!-- ============ 获取体验 ============ -->
+    <section class="download reveal" id="download">
+        <div class="container">
+            <h2 class="section-title">获取体验</h2>
+            <p class="section-subtitle">— GET STARTED —</p>
+
+            <div class="qr-placeholder">
+                微信扫码<br>体验小程序<br><br>
+                [二维码占位]
+            </div>
+
+            <div class="hero-cta">
+                <a href="#top" class="btn btn-inverse">返回顶部</a>
+            </div>
+
+            <div class="download-info">
+                河北师范大学 · 像素校园漫游小程序<br>
+                微信开发者工具 · Canvas 2D · 云开发
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 页脚 ============ -->
+    <footer>
+        <div class="footer-title">HEBEI NORMAL UNIVERSITY · PIXEL CAMPUS</div>
+        <p>河北师范大学像素风校园漫游小程序 · 仅供学习交流使用</p>
+        <p>© 2026 Campus Pixel Mini Program</p>
+    </footer>
+
+    <!-- ===== JS 模块（按依赖顺序：图标/数据 → 渲染 → 交互） ===== -->
+    <!-- 1. 纯数据：SVG 图标集合 + 功能/建筑/技术/预览 配置 -->
+    <script src="js/icons.js"></script>
+    <script src="js/featureData.js"></script>
+
+    <!-- 2. 渲染：根据数据配置生成卡片 DOM（必须在 body 解析后执行） -->
+    <script src="js/render.js"></script>
+
+    <!-- 3. 交互：导航、滚动、高亮等（顺序无关，互不依赖） -->
+    <script src="js/heroPixels.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/smoothScroll.js"></script>
+    <script src="js/reveal.js"></script>
+    <script src="js/navHighlight.js"></script>
+</body>
+</html>
