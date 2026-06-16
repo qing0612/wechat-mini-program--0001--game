@@ -13,11 +13,14 @@ class ProgressLoader {
     this.stageText1 = options.stageText1 || '初始化画布...';
     this.stageText2 = options.stageText2 || '加载地图资源...';
     this.stageText3 = options.stageText3 || '准备就绪...';
-    this.intervalMs = options.intervalMs || 50;
+    this.intervalMs = options.intervalMs || 120;
+    this.completeDelayMs = options.completeDelayMs || 1500;
 
     this._timer = null;
     this._isMapLoaded = false;
     this._onComplete = null;
+    this._progress = 0;       // 内部维护进度，不依赖 setData 异步
+    this._stage = 0;           // 当前阶段（0=初始, 1=阶段1文案, 2=阶段2文案, 3=阶段3文案）
   }
 
   setMapLoaded(loaded = true) {
@@ -27,6 +30,8 @@ class ProgressLoader {
   start(onComplete) {
     this.stop();
     this._onComplete = onComplete || null;
+    this._progress = 0;
+    this._stage = 0;
     this._timer = setInterval(() => this._tick(), this.intervalMs);
   }
 
@@ -38,21 +43,34 @@ class ProgressLoader {
   }
 
   _tick() {
-    let current = this.page.data.loadProgress || 0;
+    let current = this._progress;
     let next = current;
 
     if (current < 30) {
-      next = current + 2;
-      if (next >= 30) this.page.setData({ loadStageText: this.stageText1 });
+      // 0-30%：轻柔推进，让用户看到"初始化画布..."
+      next = current + 1;
+      if (next >= 30 && this._stage < 1) {
+        this._stage = 1;
+        this.page.setData({ loadStageText: this.stageText1 });
+      }
     } else if (current < 70) {
-      next = current + 1.5;
-      if (next >= 50) this.page.setData({ loadStageText: this.stageText2 });
+      // 30-70%：中速推进，展示"加载地图资源..."
+      next = current + 0.8;
+      if (next >= 50 && this._stage < 2) {
+        this._stage = 2;
+        this.page.setData({ loadStageText: this.stageText2 });
+      }
       if (this._isMapLoaded && next > 70) next = 70;
     } else if (current < 100 && this._isMapLoaded) {
-      next = current + 3;
-      if (next >= 85) this.page.setData({ loadStageText: this.stageText3 });
+      // 70-100%（已加载完成）：匀速推进到 100%
+      next = current + 1.5;
+      if (next >= 85 && this._stage < 3) {
+        this._stage = 3;
+        this.page.setData({ loadStageText: this.stageText3 });
+      }
     } else if (current < 100 && !this._isMapLoaded && current < 90) {
-      next = current + 0.5;
+      // 70-90%（尚未加载完成）：缓慢增长，等待资源就绪
+      next = current + 0.3;
     }
 
     if (next >= 100) {
@@ -61,11 +79,14 @@ class ProgressLoader {
       setTimeout(() => {
         this.page.setData({ loadVisible: false });
         if (this._onComplete) this._onComplete();
-      }, 300);
+      }, this.completeDelayMs);
     }
 
-    if (next !== current) {
+    if (Math.round(next) !== Math.round(current)) {
+      this._progress = next;
       this.page.setData({ loadProgress: Math.round(next) });
+    } else {
+      this._progress = next;
     }
   }
 

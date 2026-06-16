@@ -9,7 +9,9 @@ const { audioManager } = require('../../utils/index.js');
 Page({
   data: {
     imgLoaded: false,
-    imgError: false
+    imgError: false,
+    entering: false,
+    enterProgress: 0
   },
 
   onLoad() {
@@ -80,10 +82,24 @@ Page({
   },
 
   _navigateToMap() {
-    wx.navigateTo({
-      url: '/pages/map/map',
-      fail: () => wx.redirectTo({ url: '/pages/map/map' })
-    });
+    this.setData({ entering: true, enterProgress: 0 });
+    let p = 0;
+    const timer = setInterval(() => {
+      p += 2;
+      if (p >= 100) {
+        p = 100;
+        this.setData({ enterProgress: 100 });
+        clearInterval(timer);
+        setTimeout(() => {
+          wx.navigateTo({
+            url: '/pages/map/map',
+            fail: () => wx.redirectTo({ url: '/pages/map/map' })
+          });
+        }, 300);
+      } else {
+        this.setData({ enterProgress: p });
+      }
+    }, 60);
   },
 
   // === 分享 ===

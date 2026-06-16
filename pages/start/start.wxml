@@ -46,4 +46,13 @@
       <text class="footer-text">探索你的大学之旅</text>
     </view>
   </view>
+
+  <!-- 进入游戏进度条遮罩 -->
+  <view class="progress-overlay" wx:if="{{entering}}">
+    <view class="progress-title">正在进入游戏</view>
+    <view class="progress-bar-wrap">
+      <view class="progress-bar" style="width: {{enterProgress}}%;"></view>
+    </view>
+    <view class="progress-percent">{{enterProgress}}%</view>
+  </view>
 </view>
