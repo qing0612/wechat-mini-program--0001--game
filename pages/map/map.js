@@ -1,13 +1,19 @@
-// pages/map/map.js - 校园地图（模块化组装版）
-// 原代码约 634 行，现在约 190 行。具体工作分解到：
-//   renderers/campusRenderer.js  - 地图背景 / 建筑触发区 / 日夜遮罩
-//   controllers/CanvasBootstrap   - Canvas 初始化 / 重试 / 缩放
-//   controllers/PlayerController  - 玩家移动 / 方向 / 边界 / 防抖保存
+// pages/map/map.js - 校园地图（level 1，模块化组装版）
+//
+// 页面层级：map(1)。导航规则：
+//   map(1) → building/sports(2)：使用 NavController.forward 带像素过渡
+//   map(1) → start(0)：直接退出（无过渡，返回上一层）
+//
+// 具体工作分解到各模块：
+//   renderers/campusRenderer.js    - 地图背景 / 建筑触发区 / 日夜遮罩
+//   controllers/CanvasBootstrap    - Canvas 初始化 / 重试 / 缩放
+//   controllers/PlayerController   - 玩家移动 / 方向 / 边界 / 防抖保存
 //   controllers/BuildingController - 建筑触发检测 / 弹窗 / 冷却期
-//   controllers/ProgressLoader    - 加载进度条
-//   controllers/GameTimer         - 游戏计时器（00:00）
-//   controllers/WeatherManager    - 季节 → 天气（雨/雪/无）
-//   controllers/TouchDispatcher   - 触摸 → 摇杆
+//   controllers/NavController      - 页面层级导航（低↔高）
+//   controllers/ProgressLoader     - 加载进度条
+//   controllers/GameTimer          - 游戏计时器（00:00）
+//   controllers/WeatherManager     - 季节 → 天气（雨/雪/无）
+//   controllers/TouchDispatcher    - 触摸 → 摇杆
 //
 // 本文件只负责：初始化各模块、组装生命周期、绑定页面按钮与分享
 
@@ -20,7 +26,8 @@ const {
   ProgressLoader,
   GameTimer,
   WeatherManager,
-  TouchDispatcher
+  TouchDispatcher,
+  NavController
 } = require('../../controllers/index.js');
 const { campusRenderer } = require('../../renderers/index.js');
 const { audioManager } = require('../../utils/index.js');
@@ -43,10 +50,14 @@ Page({
     gameTime: '00:00',
     loadProgress: 0,
     loadVisible: true,
-    loadStageText: '资源加载中...'
+    loadStageText: '资源加载中...',
+    // NavController：进入建筑/运动场时的低→高过渡
+    navVisible: false,
+    navProgress: 0,
+    navTitle: ''
   },
 
-  // ====== 初始化：恢复位置 + 订阅 state 变更 ======
+  // ====== 初始化：恢复位置 + 订阅 state 变更 + 导航控制器 ======
   onLoad() {
     const state = gameStore.getState();
     this._savedState = state;
@@ -55,6 +66,8 @@ Page({
     // Joystick 不依赖 Canvas，可立即创建（触摸事件早于 Canvas ready）
     const Joystick = require('../../utils/joystick.js');
     this.joystick = new Joystick({ radius: UI.JOYSTICK_RADIUS });
+    // 导航控制器：当前页面为 map，层级 1
+    this.nav = new NavController(this, 'map');
     this.unsubscribe = gameStore.subscribe((newState) => {
       this._season = newState.season || this._season;
       this._isDay = newState.isDay;
@@ -110,14 +123,15 @@ Page({
       }
     });
 
-    // 建筑触发
+    // 建筑触发：map(1) → building/sports(2) 为低→高，使用 NavController.forward 带像素过渡
+    const navRef = this.nav;
     this.buildingCtrl = new BuildingController({
       buildingService,
       onEnter: (bld) => {
         if (bld.isSportsField) {
-          wx.navigateTo({ url: '/pages/sports/sports' });
+          navRef.forward('/pages/sports/sports', { title: '正在进入运动场' });
         } else {
-          wx.navigateTo({ url: '/pages/building/building?id=' + bld.id });
+          navRef.forward('/pages/building/building?id=' + bld.id, { title: '正在进入建筑' });
         }
       }
     });
@@ -166,6 +180,9 @@ Page({
     const state = gameStore.getState();
     this._season = state.season || this._season;
     this._isDay = state.isDay;
+
+    // 从 building/sports 页面返回：清除过渡遮罩（高→低，无过渡）
+    if (this.nav) this.nav.hideOverlay();
 
     this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
     setTimeout(() => {
@@ -223,6 +240,7 @@ Page({
     }
     if (this.buildingCtrl) this.buildingCtrl.destroy();
     if (this._bootstrap) this._bootstrap.destroy();
+    if (this.nav) this.nav.destroy();
     if (gameStore) {
       gameStore.stopGame();
       const p = this.playerCtrl ? this.playerCtrl.getPlayerPos() : null;
@@ -327,6 +345,7 @@ Page({
   onTouchEnd(e) { if (this.touch) this.touch.onEnd(e); },
 
   // ====== 导航按钮 ======
+  // map(1) → start(0) 是高→低，直接返回，无过渡
   onBack() {
     wx.showModal({
       title: '退出游戏',
@@ -335,10 +354,9 @@ Page({
       cancelText: '否',
       success: (res) => {
         if (res.confirm) {
-          this._cleanup();
-          wx.navigateBack({
-            fail: () => wx.redirectTo({ url: '/pages/start/start' })
-          });
+          // 关键：先调用 nav.back() 执行导航（navigateBack 会触发页面卸载）
+          // 再在 onUnload 中统一 _cleanup，避免 _cleanup 销毁 nav 后再调用 nav.back() 失效
+          this.nav.back({ fallbackUrl: '/pages/start/start' });
         }
       }
     });

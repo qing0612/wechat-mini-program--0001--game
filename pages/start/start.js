@@ -1,27 +1,38 @@
 // pages/start/start.js
-// 开始页面：新游戏 / 继续上一次的入口
+// 开始页面（level 0）：新游戏 / 继续上一次的入口
 //
-// 模块化写法：统一从目录 index.js 引入，避免大量零散 require
+// 设计：
+//   使用 NavController 统一处理页面导航逻辑
+//   - start(0) → map(1)：像素进度条过渡后 navigateTo
 
 const { gameStore } = require('../../store/index.js');
 const { audioManager } = require('../../utils/index.js');
+const { NavController } = require('../../controllers/index.js');
 
 Page({
   data: {
     imgLoaded: false,
     imgError: false,
-    entering: false,
-    enterProgress: 0
+    // NavController 使用的三个字段（低→高过渡使用）
+    navVisible: false,
+    navProgress: 0,
+    navTitle: ''
   },
 
   onLoad() {
     audioManager.init();
+    // 初始化导航控制器：当前页面为 start，层级 0
+    this.nav = new NavController(this, 'start');
   },
 
   onShow() {
-    // 从 map 页面返回时，清除进入游戏的遮罩状态
-    this.setData({ entering: false, enterProgress: 0 });
+    // 从 map 页面返回时，清除过渡遮罩
+    if (this.nav) this.nav.hideOverlay();
     audioManager.playWithMuteCheck('start');
+  },
+
+  onUnload() {
+    if (this.nav) this.nav.destroy();
   },
 
   onImgLoad() {
@@ -84,24 +95,9 @@ Page({
   },
 
   _navigateToMap() {
-    this.setData({ entering: true, enterProgress: 0 });
-    let p = 0;
-    const timer = setInterval(() => {
-      p += 2;
-      if (p >= 100) {
-        p = 100;
-        this.setData({ enterProgress: 100 });
-        clearInterval(timer);
-        setTimeout(() => {
-          wx.navigateTo({
-            url: '/pages/map/map',
-            fail: () => wx.redirectTo({ url: '/pages/map/map' })
-          });
-        }, 300);
-      } else {
-        this.setData({ enterProgress: p });
-      }
-    }, 60);
+    // 使用 NavController.forward 处理低→高过渡
+    // 自动显示像素进度条，完成后 navigateTo map 页面
+    this.nav.forward('/pages/map/map', { title: '正在进入校园' });
   },
 
   // === 分享 ===

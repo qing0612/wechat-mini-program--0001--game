@@ -1,18 +1,30 @@
 const gameStore = require('../../store/gameStore.js');
+const { NavController } = require('../../controllers/index.js');
 
 Page({
   data: {
     items: [],
     selectedItem: null,
-    imgErrors: {}
+    imgErrors: {},
+    // NavController：预留字段
+    navVisible: false,
+    navProgress: 0,
+    navTitle: ''
   },
 
   onLoad() {
+    // NavController：当前页面为 backpack，层级 1（与 map 同级）
+    this.nav = new NavController(this, 'backpack');
     this.loadBackpack();
   },
 
   onShow() {
+    if (this.nav) this.nav.hideOverlay();
     this.loadBackpack();
+  },
+
+  onUnload() {
+    if (this.nav) this.nav.destroy();
   },
 
   // 加载背包数据
@@ -117,11 +129,8 @@ Page({
     });
   },
 
+  // 返回上一页：backpack(1) → map(1)，同级，直接返回
   goBack() {
-    wx.navigateBack({
-      fail: () => {
-        wx.redirectTo({ url: '/pages/map/map' });
-      }
-    });
+    this.nav.back({ fallbackUrl: '/pages/map/map' });
   }
 });

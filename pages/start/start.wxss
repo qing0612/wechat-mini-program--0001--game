@@ -1,4 +1,5 @@
 @import '../../styles/pixel-theme.wxss';
+@import '../../styles/nav-transition.wxss';
 
 .start-page {
   width: 100vw;
@@ -266,54 +267,4 @@
   to { transform: rotate(360deg); }
 }
 
-/* 进入游戏进度条遮罩 */
-.progress-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.92);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.progress-title {
-  font-size: 32rpx;
-  color: #f4a261;
-  font-weight: 900;
-  letter-spacing: 8rpx;
-  margin-bottom: 30rpx;
-  text-shadow: 2rpx 2rpx 0 #0f0f1a;
-}
-
-.progress-bar-wrap {
-  width: 60%;
-  height: 24rpx;
-  background: #1a1a2e;
-  border: 3rpx solid #f4a261;
-  box-shadow: 3rpx 3rpx 0 0 #0f0f1a;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #f4a261 0%, #e76f51 100%);
-  transition: width 0.06s linear;
-}
-
-.progress-percent {
-  margin-top: 20rpx;
-  font-size: 24rpx;
-  color: #ccc;
-  letter-spacing: 4rpx;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* 页面过渡遮罩样式：由 styles/nav-transition.wxss 统一提供 */

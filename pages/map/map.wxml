@@ -1,4 +1,13 @@
 <view class="map-page" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+  <!-- 页面过渡遮罩（低→高导航时显示，由 NavController 驱动） -->
+  <view class="nav-transition" wx:if="{{navVisible}}">
+    <view class="nav-title">{{navTitle}}</view>
+    <view class="nav-bar-outer">
+      <view class="nav-bar-inner" style="width:{{navProgress}}%;"></view>
+    </view>
+    <view class="nav-percent">{{navProgress}}%</view>
+  </view>
+
   <!-- 带进度条的加载过渡画面：消除切换瞬间的颜色闪烁 -->
   <view class="map-overlay" wx:if="{{loadVisible}}">
     <view class="load-container">
@@ -15,6 +24,7 @@
       </view>
     </view>
   </view>
+
   <!-- 游戏画布 -->
   <canvas
     type="2d"

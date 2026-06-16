@@ -1,4 +1,5 @@
 @import '../../styles/pixel-theme.wxss';
+@import '../../styles/nav-transition.wxss';
 
 .map-page {
   width: 100vw;

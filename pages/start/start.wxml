@@ -47,12 +47,12 @@
     </view>
   </view>
 
-  <!-- 进入游戏进度条遮罩 -->
-  <view class="progress-overlay" wx:if="{{entering}}">
-    <view class="progress-title">正在进入游戏</view>
-    <view class="progress-bar-wrap">
-      <view class="progress-bar" style="width: {{enterProgress}}%;"></view>
+  <!-- 页面过渡遮罩（低→高导航，由 NavController 驱动） -->
+  <view class="nav-transition" wx:if="{{navVisible}}">
+    <view class="nav-title">{{navTitle}}</view>
+    <view class="nav-bar-outer">
+      <view class="nav-bar-inner" style="width:{{navProgress}}%;"></view>
     </view>
-    <view class="progress-percent">{{enterProgress}}%</view>
+    <view class="nav-percent">{{navProgress}}%</view>
   </view>
 </view>

@@ -1,8 +1,13 @@
 const audioManager = require('../../utils/audioManager.js');
 const gameStore = require('../../store/gameStore.js');
+const { NavController } = require('../../controllers/index.js');
 
 Page({
   data: {
+    // NavController：预留字段，保证页面模板结构统一
+    navVisible: false,
+    navProgress: 0,
+    navTitle: '',
     // 音效开关状态
     startMusicEnabled: true,
     mapMusicEnabled: true,
@@ -25,6 +30,8 @@ Page({
 
   onLoad() {
     audioManager.init();
+    // NavController：当前页面为 settings，层级 1（与 map 同级）
+    this.nav = new NavController(this, 'settings');
     const state = gameStore.getState();
     const season = state.season || 'spring';
     const seasonIndex = ['spring', 'summer', 'autumn', 'winter'].indexOf(season);
@@ -92,13 +99,18 @@ Page({
     gameStore.setSeason(season);
   },
 
-  // 返回上一页
+  onShow() {
+    // 从下一级页面返回：清除过渡遮罩
+    if (this.nav) this.nav.hideOverlay();
+  },
+
+  onUnload() {
+    if (this.nav) this.nav.destroy();
+  },
+
+  // 返回上一页：settings(1) → map(1)，同级，使用 nav.back() 直接返回
   goBack() {
-    wx.navigateBack({
-      fail: () => {
-        wx.redirectTo({ url: '/pages/start/start' });
-      }
-    });
+    this.nav.back({ fallbackUrl: '/pages/map/map' });
   },
 
   // 打开隐私政策：优先跳转到小程序内置隐私政策页面

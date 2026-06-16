@@ -1,5 +1,6 @@
 const buildingService = require('../../services/buildingService.js');
 const gameStore = require('../../store/gameStore.js');
+const { NavController } = require('../../controllers/index.js');
 
 Page({
   data: {
@@ -7,10 +8,17 @@ Page({
     imgError: false,
     badgeImgError: false,
     badgeEarned: false,
-    showBadgePopup: false
+    showBadgePopup: false,
+    // NavController：预留字段
+    navVisible: false,
+    navProgress: 0,
+    navTitle: ''
   },
 
   onLoad(options) {
+    // NavController：当前页面为 building，层级 2
+    this.nav = new NavController(this, 'building');
+
     const id = options.id || 'library';
     const building = buildingService.getBuildingById(id) || buildingService.getAllBuildings()[0];
     this.setData({ building, imgError: false });
@@ -31,12 +39,20 @@ Page({
     this.setData({ badgeImgError: true });
   },
 
+  onShow() {
+    if (this.nav) this.nav.hideOverlay();
+  },
+
+  onUnload() {
+    if (this.nav) this.nav.destroy();
+  },
+
   onBack() {
-    wx.navigateBack();
+    this.nav.back({ fallbackUrl: '/pages/map/map' });
   },
 
   onImgTap() {
-    wx.navigateBack();
+    this.nav.back({ fallbackUrl: '/pages/map/map' });
   },
 
   closeBadgePopup() {

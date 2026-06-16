@@ -14,6 +14,7 @@ const MAP = require('./map.js');
 const SPORTS_MAP = require('./sportsMap.js');
 const UI = require('./ui.js');
 const ANIMATION = require('./animation.js');
+const navLevels = require('./navLevels.js');
 const legacy = require('./gameConfig.js');
 
 module.exports = {
@@ -22,6 +23,11 @@ module.exports = {
   SPORTS_MAP,
   UI,
   ANIMATION,
+  // 页面层级配置（0=start, 1=map, 2=building/sports）
+  PAGE_LEVELS: navLevels.PAGE_LEVELS,
+  LEVEL_START: navLevels.LEVEL_START,
+  LEVEL_MAP: navLevels.LEVEL_MAP,
+  LEVEL_SUB: navLevels.LEVEL_SUB,
   // 与 gameConfig.js 结构对齐，便于搜索 "BUILDINGS" 关键词的代码继续工作
   BUILDINGS: (legacy && legacy.BUILDINGS) || { COLLISION_ENABLED: false },
   UPDATE_INTERVAL: (legacy && legacy.UI && legacy.UI.UPDATE_INTERVAL) || 3
