@@ -169,7 +169,7 @@ images/
 | `pages/backpack/backpack.js` | Inventory: 16-grid display, badge gallery | `store/gameStore.js` (backpack array) |
 | `pages/privacy/privacy.js` | Privacy policy + user agreement text page | Linked from `pages/settings/settings.js` |
 | `utils/logger.js` | Unified logging with WeChat realtime log manager | `app.js` (global onError/onUnhandledRejection), `store/gameStore.js`, `pages/*/*.js` |
-| `utils/cloudSync.js` | Optional cloud sync: user_saves collection, dynamic availability check | `app.js` (CLOUD_ENV + cloudReady flag), `store/gameStore.js` (save/restore flow) |
+| `utils/cloudSync.js` | Optional cloud sync: user_saves collection, dynamic availability check | `app.js` (CLOUD_ENV + cloudReady flag), `store/gameStore.js` (_persist → persistence.save) |
 | `services/buildingService.js` | Building lookup: find building by id, detect when player enters trigger zone | `data/buildings.js`, `pages/map/map.js` |
 
 ### Data Consistency: Single Source of Truth (CRITICAL)
@@ -178,25 +178,28 @@ images/
 
 | Data Point | Source of Truth | Auto-synced Fields | Notes |
 |-----------|-----------------|-------------------|-------|
-| Buildings visited | `state.backpack.length` | `state.stats.buildingsVisited` (synced in `_save()` / `_restore()`) | EQUAL to badge count. Visiting a building grants exactly one badge. |
-| Badges collected | `state.backpack.length` | `state.stats.badgesCollected` (synced in `_save()` / `_restore()`) | EQUAL to building count. Each building grants one badge. |
-| Total steps | `state.stats.totalSteps` | Independent counter | Incremented by 1 each `movePlayer()` call. Reset to 0 in `resetGame()`. |
-| Player position | `state.player.x`, `state.player.y` | Written on each move | Persisted to `wx.setStorageSync`. Reset to spawn in `resetGame()`. |
-| Backback items | `state.backpack[]` | Primary array of items | Array of item objects. Each badge is one entry. |
-| Day/night | `state.isDay` | Boolean flag | Toggle in settings. |
-| Season | `state.season` | String: `"spring"`, `"summer"`, `"autumn"`, `"winter"` | Toggle in settings. |
+| Buildings visited | `backpack.count()` | `stats.syncFromBackpack(backpack.count())` in addToBackpack/removeFromBackpack/setCurrentBuilding/forceSyncToCloud/_applySnapshot | EQUAL to badge count. Visiting a building grants exactly one badge. |
+| Badges collected | `backpack.count()` | Same sync as buildings visited | EQUAL to building count. Each building grants one badge. |
+| Total steps | `stats.totalSteps` (read-only) | `stats.stepOnce()` auto-increments on each player move | Incremented by 1 each `updatePlayerPos()` call. Reset to 0 in `resetGame()` and `setSaveOnQuit(false)`. |
+| Player position | `player.x`, `player.y` | Written on each move | Persisted via `_snapshot()` → `persistence.save()`. Reset to spawn in `resetGame()`. |
+| Sports field position | `sportsPlayer.x`, `sportsPlayer.y` | Separate from main map | Independent coordinate store for sports page. |
+| Backpack items | `backpack.snapshot()` | Array of item objects. Each badge is one entry. | `backpack.count()` is the length. |
+| Day/night | `isDay` | Boolean flag | Toggle in settings. |
+| Season | `season` | String: `"spring"`, `"summer"`, `"autumn"`, `"winter"` | Toggle in settings. |
+| Save-enabled | `saveOnQuit` | Boolean flag | `false` = no persistence, `stats.reset()`. |
 
-**CRITICAL RULE**: Never maintain `visitedBuildingIds` or any separate counter. This field was removed after causing data inconsistency bugs. All building/badge counts are derived from `backpack.length`.
+**CRITICAL RULE**: Never maintain `visitedBuildingIds` or any separate counter. This field was removed after causing data inconsistency bugs. All building/badge counts are derived from `backpack.count()`.
 
-**In `gameStore._save()` and `gameStore._restore()`**, always include:
-```javascript
-state.stats.buildingsVisited = state.backpack.length;
-state.stats.badgesCollected = state.backpack.length;
-```
+**Backpack-stats sync is embedded in mutation APIs**, NOT done in a separate `_save()`/`_restore()` step:
+- `addToBackpack(item)` → calls `stats.syncFromBackpack(backpack.count())`
+- `removeFromBackpack(id)` → calls `stats.syncFromBackpack(backpack.count())`
+- `setCurrentBuilding(idOrBuilding)` → calls `stats.syncFromBackpack(backpack.count())`
+- `forceSyncToCloud()` → calls `stats.syncFromBackpack(backpack.count())`
+- `_applySnapshot(data)` → calls `stats.syncFromBackpack(backpack.count())`
 
-### State Management (gameStore)
+### State Management (gameStore — Modular Architecture)
 
-**Pattern**: Singleton with subscriber pattern. One global instance shared across all pages.
+**Pattern**: Singleton with subscriber pattern. One global instance shared across all pages. Backed by sub-modules.
 
 ```javascript
 // In any page file:
@@ -222,6 +225,20 @@ console.log(state.stats.totalSteps);  // total steps
 gameStore.resetGame();  // Resets EVERYTHING including totalSteps, player position, backpack, badges
 ```
 
+**gameStore sub-modules** (in `store/`):
+- `backpack.js` — badge/item collection (`add` / `remove` / `has` / `count` / `snapshot` / `load`)
+- `stats.js` — steps & badge counts (`stepOnce` / `syncFromBackpack` / `load` / `reset`, read via getters)
+- `persistence.js` — local storage + cloud sync encapsulation (`saveLocal` / `loadLocal` / `clearLocal` / `save` / `syncToCloud` / `forceSyncToCloud` / `loadFromCloud`, cloud provider injected via `setCloudProvider`)
+
+**When adding a new state field**, you must update ALL of:
+1. `gameStore` constructor — field initialization
+2. `setState(partial)` — merge logic
+3. `getState()` — return snapshot
+4. `_snapshot()` — build persistence object
+5. `_applySnapshot(data)` — restore from saved data
+6. `resetGame()` — reset to fresh defaults (if applicable)
+7. Optional: `addToBackpack` / `removeFromBackpack` / `setCurrentBuilding` / `forceSyncToCloud` if it affects stats consistency
+
 **What `resetGame()` does** (never manually setState for this):
 - Player position → `PLAYER.SPAWN_X`, `PLAYER.SPAWN_Y`
 - Player direction → `"down"`
@@ -230,7 +247,7 @@ gameStore.resetGame();  // Resets EVERYTHING including totalSteps, player positi
 - Day/night → `true` (day)
 - Season → `"spring"`
 
-**Persistence**: `wx.setStorageSync('game_state')` writes a JSON string. `wx.getStorageSync('game_state')` reads. The key is always `'game_state'`.
+**Persistence flow**: `notify()` → `_persist()` → `persistence.save(snapshot)` → `wx.setStorageSync('game_state')`. The key is always `'game_state'`.
 
 **Safety mechanism**: The entire `GameStore` constructor is wrapped in a try-catch block that falls back to a minimal valid state. This prevents black screens from corrupted storage data.
 
@@ -276,7 +293,7 @@ available() {
 
 **Layer 3 — `store/gameStore.js` (Conditional Invocation)**
 ```javascript
-// In _save() — local save always runs; cloud sync is optional
+// In _persist() — local save always runs; cloud sync is optional
 try {
   wx.setStorageSync('game_state', JSON.stringify({ ... }));  // Always runs
 } catch (e) { /* log */ }
@@ -435,9 +452,9 @@ onUnhandledRejection(res) {
 
 **Root cause**: Some code was maintaining a separate `visitedBuildingIds` array independently of the backpack, causing them to drift apart.
 
-**Permanent fix**: Both values are now ALWAYS derived from `state.backpack.length`. The sync happens in `gameStore._save()` and `gameStore._restore()`.
+**Permanent fix**: Both values are now ALWAYS derived from `backpack.count()`. The sync happens inside mutation APIs (`addToBackpack`, `removeFromBackpack`, `setCurrentBuilding`, `forceSyncToCloud`, `_applySnapshot`) each calling `stats.syncFromBackpack(backpack.count())`.
 
-**If you see this issue again**: Check that some new code path did NOT reintroduce a separate counter. Search for `visitedBuildingIds` or manual `stats.buildingsVisited = X` outside of `_save()` / `_restore()`.
+**If you see this issue again**: Check that some new code path did NOT reintroduce a separate counter. Search for `visitedBuildingIds` or manual `stats.buildingsVisited = X` outside of the backpack mutation methods.
 
 ### Issue 5: Total steps not resetting when starting new game
 
@@ -506,44 +523,57 @@ If all 4 are confirmed, check:
 
 ```javascript
 // Step 1: Add field to initial state in gameStore.js constructor
-this.state = {
-  ...existing fields...,
-  yourNewField: defaultValue,     // ← ADD HERE
-};
+// (declare as this.yourNewField = defaultValue, not inside this.state object)
+this.yourNewField = defaultValue;    // ← ADD HERE
 
-// Step 2: Add setter method
+// Step 2: Add setter method (if write access needed)
 setYourNewField(value) {
-  this.setState({ yourNewField: value });
+  this.yourNewField = value;
+  this.notify();
 }
 
-// Step 3: Add to _save() — include in JSON.stringify object
-_save() {
-  wx.setStorageSync('game_state', JSON.stringify({
+// Step 3: Add to _snapshot() — include in persistence JSON object
+_snapshot() {
+  return {
     ...existing fields...,
-    yourNewField: this.state.yourNewField,  // ← ADD HERE
-  }));
+    yourNewField: this.yourNewField,  // ← ADD HERE
+  };
 }
 
-// Step 4: Add to _restore() — read from saved data
-_restore() {
-  const raw = wx.getStorageSync('game_state');
-  if (!raw) return;
-  const d = JSON.parse(raw);
-  if (typeof d.yourNewField !== 'undefined') {  // ← ADD type check
-    this.state.yourNewField = d.yourNewField;
+// Step 4: Add to _applySnapshot(data) — read from saved data
+_applySnapshot(data) {
+  if (data && typeof data.yourNewField !== 'undefined') {  // ← ADD type check
+    this.yourNewField = data.yourNewField;
   }
 }
 
-// Step 5: Add to resetGame() if it should reset on new game
-resetGame() {
-  this.setState({
+// Step 5: Add to getState() — expose in public snapshot (if needed by pages)
+getState() {
+  return {
     ...existing fields...,
-    yourNewField: defaultValue,   // ← ADD HERE (if should reset)
-  });
+    yourNewField: this.yourNewField,  // ← ADD HERE (only if pages read it)
+  };
+}
+
+// Step 6: Add to setState(partial) — merge support (if field is writable via setState)
+setState(partial) {
+  if (!partial || typeof partial !== 'object') return;
+  if ('yourNewField' in partial) {      // ← ADD type-specific branch
+    this.yourNewField = partial.yourNewField;
+  }
+  this.notify();
+}
+
+// Step 7: Add to resetGame() if it should reset on new game
+resetGame() {
+  this.yourNewField = defaultValue;   // ← ADD HERE (if should reset)
+  this.notify();
 }
 ```
 
-**Historical pitfall**: Forgetting to add the field to `_save()` and `_restore()` means the value exists in memory but disappears after app restart. ALWAYS update all 3-4 places.
+**Historical pitfall**: Forgetting to add the field to `_snapshot()` and `_applySnapshot()` means the value exists in memory but disappears after app restart. ALWAYS update all 6-7 places.
+
+**Modern approach**: The `_save()` / `_restore()` pattern was replaced with `_snapshot()` / `_applySnapshot()` + `_persist()` → `persistence.save(snapshot)`. If you find references to `_save()` / `_restore()`, update them to use the new API.
 
 ### Pattern 2: Adding a New Building
 
@@ -625,7 +655,7 @@ if (cloudSync.available()) {
 3. **Verify resource files exist** — check `images/` directory before writing image paths
 4. **Check `data/buildingHistory.js`** — if modifying building text, check current structure
 5. **Make minimal changes** — follow patterns in "Standard Code Patterns" section
-6. **Data consistency check**: Did you update `_save()`, `_restore()`, `resetGame()` for new state fields?
+6. **Data consistency check**: Did you update `_snapshot()`, `_applySnapshot()`, `getState()`, `setState()`, `resetGame()` for new state fields?
 7. **Test in WeChat DevTools**: Clear cache → Full clear → Compile → no console errors
 8. **Test building pages**: Enter each building, verify image + text + badge work
 9. **Test new game**: Tap "新建游戏" → verify ALL counters reset to 0
@@ -661,11 +691,11 @@ if (cloudSync.available()) {
 
 | When you modify this file | Check whether these files also need updates |
 |--------------------------|-------------------------------------------|
-| `store/gameStore.js` (add new state field) | `_save()` for persistence, `_restore()` for loading, `resetGame()` for new game reset |
+| `store/gameStore.js` (add new state field) | `_snapshot()` for persistence, `_applySnapshot()` for loading, `getState()` / `setState()` exposure, `resetGame()` for new game reset |
 | `data/buildings.js` (add building) | `data/buildingHistory.js` (add text), verify image files exist in `images/buildings/` and `images/badges/` |
 | `pages/start/start.js` | `gameStore.resetGame()` call for "新建游戏" button (never manual setState) |
 | `pages/settings/settings.js` | GameStore state reads: did you add fields that settings displays? |
 | `pages/map/map.js` | `services/buildingService.js` building detection, `gameConfig.js` map size constants |
-| `utils/cloudSync.js` | `app.js` (CLOUD_ENV and cloudReady flag), `gameStore.js` (_save/_restore cloud calls) |
+| `utils/cloudSync.js` | `app.js` (CLOUD_ENV and cloudReady flag), `gameStore.js` (_persist calls persistence.save which syncs to cloud) |
 | `app.json` | DO NOT add `__usePrivacyCheck__`, `subPackages`, or `"webp": true`. New pages must be registered. |
 | `project.config.json` | Keep `__usePrivacyCheck__: true` in `setting`. `appid` should NOT change. |

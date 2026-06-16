@@ -102,9 +102,8 @@
 - 当前 `app.json` 就是正确模板，不要添加额外字段
 
 ### ❌ 禁止维护 `visitedBuildingIds`
-- **这个字段从未存在于 gameStore 中**（`settings.js` 里有兼容代码，但只是兜底，不依赖此字段）
-- 建筑探索数 = 徽章数 = `backpack.length`（唯一真相来源）
-- `gameStore.stats.buildingsVisited` 和 `gameStore.stats.badgesCollected` 在每次 `_save()` 时自动同步为 `backpack.length`
+- **这个字段从未存在于 gameStore 中**
+- 建筑探索数 = 徽章数 = `backpack.count()`（唯一真相来源，由 `stats.syncFromBackpack(backpack.count())` 在 `addToBackpack`/`removeFromBackpack`/`setCurrentBuilding`/`forceSyncToCloud`/`_applySnapshot` 中保持一致）
 - 不要在任何地方新增或读取 `visitedBuildingIds`
 
 ### ❌ 禁止直接手动 setState 新建游戏
@@ -136,18 +135,15 @@
 
 | 数据 | 真相来源 | 同步位置 |
 |------|----------|---------|
-| 已探索建筑数 | `state.backpack.length` | `_save()` / `_restore()` / `setCurrentBuilding()` 中同步 |
-| 已收集徽章数 | `state.backpack.length` | `_save()` / `_restore()` 中同步 |
-| 总移动步数 | `state.stats.totalSteps` | `updatePlayerPos()` 中 +1 |
-| 首次启动时间 | `state.stats.firstLaunchAt` | 构造函数中设置（如果缺失） |
-| 无痕模式开关 | `state.saveOnQuit` | `setSaveOnQuit(false)` 时同步重置 totalSteps = 0 |
+| 已探索建筑数 | `backpack.count()` | `stats.syncFromBackpack(backpack.count())` 在 `addToBackpack` / `removeFromBackpack` / `decrementFromBackpack` / `setCurrentBuilding` / `forceSyncToCloud` / `_applySnapshot` 中同步 |
+| 已收集徽章数 | `backpack.count()` | 与上一条同步机制一致 |
+| 总移动步数 | `stats.totalSteps` | `updatePlayerPos(x, y)` 中调用 `stats.stepOnce()` 自增 |
+| 首次启动时间 | `stats.firstLaunchAt` | 构造函数中缺失时设置 `Date.now()` |
+| 无痕模式开关 | `saveOnQuit` | `setSaveOnQuit(false)` 时同步 `stats.reset()` |
 | 建筑历史文案 | `data/buildingHistory.js` | `buildings.js` 中通过 `HISTORY_TEXTS.xxx` 引用 |
 
-- `gameStore._save()`、`_restore()`、`setCurrentBuilding()`、`forceSyncToCloud()` 中必须确保：
-  ```javascript
-  state.stats.buildingsVisited = state.backpack.length;
-  state.stats.badgesCollected = state.backpack.length;
-  ```
+- `gameStore.notify()` 后会走 `_persist()` → `persistence.save(snapshot)`，通过 `_snapshot()` 组装的对象写入 `wx.setStorageSync`；所有字段（player/sportsPlayer/isDay/season/backpack/saveOnQuit/stats）均会被持久化。
+- 若新增字段，需同步修改：1) `gameStore` 构造函数初始化；2) `setState(partial)` 处理；3) `getState()` 返回；4) `_snapshot()` 组装；5) `_applySnapshot(data)` 恢复；6) `resetGame()` 重置（如有必要）。
 
 ### ✅ 建筑数据的组织方式（实际现状）
 - 建筑总数：6 座（library, pont, software, museum, lecture, sports）
@@ -209,7 +205,7 @@
 - 不要修改 `app.json` 的任何分享配置
 
 ### ✅ 无痕模式（saveOnQuit）
-- `saveOnQuit = false` 时：gameStore 构造函数不读取历史存档，`_save()` 直接 return 不写入
+- `saveOnQuit = false` 时：gameStore 构造函数不读取历史存档（不恢复），`_persist()` 直接 return 不写入；同时调用 `stats.reset()` 清零步数
 - `setSaveOnQuit(false)` 调用时同步重置 `totalSteps = 0`
 - `saveOnQuit = true` 时：正常读写 `wx.setStorageSync('game_state')`
 
@@ -230,7 +226,7 @@
 | gameStore 构造函数 | 整体 try-catch 兜底到最小可用状态 | 任何异常不能导致黑屏 |
 | 存档同步 | 本地优先 + 异步同步云端 + 3 秒防抖 | 频繁写入避免微信限流 |
 | 云端存档冲突解决 | 徽章数多的一方获胜 | 新手机上不要覆盖老进度 |
-| 狮子角色 | Canvas 绘制（色块像素风）| 不需要 sprite 图片，开箱即用 |
+| 角色 | Canvas 绘制（矩形拼贴像素风人物） | 不需要 sprite 图片，开箱即用 |
 | 建筑徽章 | 配置在 `buildings.js` 的 `badge` 字段 | 与建筑数据一起维护，避免分散 |
 | 运动场 | 独立页面 `pages/sports/` + 独立地图 `SPORTS_MAP` | 与主地图解耦，避免坐标混乱 |
 | 碰撞检测 | `BUILDINGS.COLLISION_ENABLED = false` | 建筑作为触发点而非障碍物，玩家可自由走到建筑前 |
@@ -243,14 +239,14 @@
    - 修改前必须明确：用户想要达到什么效果？当前代码做了什么？哪里出了问题？
 
 2. **主动追踪完整数据流和调用链**
-   - 例如：修改 `gameStore` 的字段 → 检查 `_save()` / `_restore()` 是否需要同步更新 → 检查 `start.js` / `settings.js` 中是否有直接读取该字段的代码
+   - 例如：修改 `gameStore` 的字段 → 检查 `_snapshot()` / `_applySnapshot()` / `resetGame()` / `getState()` / `setState()` 是否需要同步更新 → 检查 `start.js` / `settings.js` 中是否有直接读取该字段的代码
 
 3. **防御性编程**
    - 操作变量/对象前永远做空值检查：`if (x && x.y)`
    - 读取 `wx.getStorageSync` 结果永远做类型检查和 try-catch
    - `gameStore` 构造函数整体 try-catch 作为最后防线
    - `cloudSync` 中所有数据库操作外包 try-catch
-   - 读取 `gameStore.state.stats` 前做空检查：`(state.stats && state.stats.totalSteps) || 0`
+   - 读取 `gameStore.getState().stats.totalSteps` 前做空检查：`(state.stats && state.stats.totalSteps) || 0`
 
 4. **最小改动原则**
    - 能用一行改的，绝不改十行
@@ -278,7 +274,7 @@
 | 需要隐私入口 | `wx.openPrivacyContract()` + `pages/privacy/` 页面 | 只说"隐私政策"四个字 |
 | 隐私后台报错 | 检查 `app.json` 中是否误加了 `__usePrivacyCheck__` → 确认该开关仅在 `project.config.json` | 改 app.json 的其他字段 |
 | 新建游戏后步数不归零 | 调用 `gameStore.resetGame()` | 手动 setState 只清 player 和 backpack |
-| 建筑数 ≠ 徽章数 | 检查 `_save()` 和 `_restore()` 中是否同步了 `stats.buildingsVisited = backpack.length` | 各自维护两套独立数据 |
+| 建筑数 ≠ 徽章数 | 检查 `stats.syncFromBackpack(backpack.count())` 是否在 `addToBackpack` / `removeFromBackpack` / `setCurrentBuilding` / `_applySnapshot` 中正确调用 | 各自维护两套独立数据 |
 | 云端同步按钮无反应 | 检查 `app.js` 中 `CLOUD_ENV` 是否填入了有效环境 ID → 检查是否调用 `wx.cloud.init` 并设置 `cloudReady = true` | 盲目增加 console.log |
 | 线上错误看不见 | 用 `logger.error()` 上报 | 用 `console.log` 只在开发工具看得到 |
 | 隐私审核被拒 | 检查微信后台是否填了「用户隐私保护指引」文本 → 确认 `project.config.json` 中 `__usePrivacyCheck__` 为 true | 只检查代码 |
@@ -416,8 +412,8 @@ git branch -d feature/add-gym-building   # 删除本地已合并分支
 | `npm run lint` 无 error | warning 也要尽量消除 | ⬜ |
 | 路径以 `/` 开头 | `data/buildings.js` 中的图片/徽章路径 | ⬜ |
 | 路径对应文件实际存在 | 检查 `images/` 目录 | ⬜ |
-| gameStore 字段改动已同步 `_save()` / `_restore()` | 新增字段要确保持久化正常 | ⬜ |
-| 不修改 `visitedBuildingIds`（该字段从未真实使用） | 用 `backpack.length` 替代 | ⬜ |
+| gameStore 字段改动已同步 `_snapshot()` / `_applySnapshot()` / `resetGame()` / `getState()` / `setState()` / `_persist()` | 新增字段要确保持久化/恢复/重置正常 | ⬜ |
+| 不修改 `visitedBuildingIds`（该字段从未真实使用） | 用 `backpack.count()` 替代 | ⬜ |
 | 不使用分包（subPackages） | 当前 7 个页面无需分包 | ⬜ |
 | 不将 `__usePrivacyCheck__` 放在 `app.json` | 仅在 `project.config.json` 中 | ⬜ |
 | 新增建筑时，同时添加了历史文案到 `buildingHistory.js` | 两个文件同步修改 | ⬜ |
@@ -485,7 +481,7 @@ git push origin master --tags
 | `pages/settings/settings.js` | **设置页面**（音乐开关/音量 + 日夜/季节 + 云端同步 + 成就统计 + 隐私政策入口） | `store/gameStore.js`, `pages/privacy/privacy.js`, `utils/audioManager.js` |
 | `pages/start/start.js` | **启动页面**（北门背景 + 进入按钮 + 新建游戏 + 音乐播放） | `store/gameStore.js`（新建游戏逻辑）, `utils/audioManager.js` |
 | `pages/building/building.js` | **建筑详情页**（插画 + 历史文案 + 徽章领取） | `data/buildings.js`, `store/gameStore.js`（徽章领取） |
-| `pages/map/map.js` | **核心地图**（Canvas 渲染 + 摇杆 + 建筑触发检测 + 狮子绘制 + 日夜叠加） | `data/buildings.js`, `config/gameConfig.js`, `utils/joystick.js`, `utils/sprite.js`, `utils/camera.js`, `utils/weatherEffect.js` |
+| `pages/map/map.js` | **核心地图**（Canvas 渲染 + 摇杆 + 建筑触发检测 + 像素角色绘制 + 日夜叠加） | `data/buildings.js`, `config/gameConfig.js`, `utils/joystick.js`, `utils/sprite.js`, `utils/camera.js`, `utils/weatherEffect.js` |
 | `pages/sports/sports.js` | **运动场子地图**（独立 Canvas + 返回按钮） | `data/buildings.js`（sports 建筑配置 + `isSportsField` 标识）, `config/gameConfig.js`（SPORTS_MAP 尺寸） |
 | `pages/privacy/privacy.js` | **隐私政策页面**（可访问的政策文本 + 用户协议） | `pages/settings/settings.js`（入口链接） |
 | `pages/backpack/backpack.js` | **背包页面**（物品格 + 徽章查看 + 丢弃/使用） | `store/gameStore.js`（backpack 数据） |
@@ -494,7 +490,7 @@ git push origin master --tags
 | `utils/audioManager.js` | **音频管理**（背景音乐 + 静音设置持久化） | `pages/start/start.js`, `pages/map/map.js`, `pages/settings/settings.js` |
 | `services/buildingService.js` | **建筑服务**（查询建筑 + 触发检测） | `data/buildings.js`, `pages/map/map.js` |
 | `utils/joystick.js` | **虚拟摇杆** | `pages/map/map.js`, `pages/sports/sports.js` |
-| `utils/sprite.js` | **精灵/玩家绘制**（像素狮子动画帧） | `pages/map/map.js`, `pages/sports/sports.js` |
+| `utils/sprite.js` | **精灵/玩家绘制**（SpriteAnimator 帧管理 + drawPlayer 矩形拼贴） | `pages/map/map.js`, `pages/sports/sports.js` |
 | `utils/camera.js` | **摄像机/世界坐标↔屏幕坐标转换** | `pages/map/map.js`, `pages/sports/sports.js` |
 | `utils/weatherEffect.js` | **天气粒子效果**（雨/雪） | `pages/map/map.js` |
 | `utils/collision.js` | **AABB 碰撞检测** | `pages/map/map.js`, `data/buildings.js`（OBSTACLES 列表） |
@@ -544,7 +540,7 @@ images/
     └── sports-bg.png                       # 运动场地图背景（949×1592，独立地图使用）
 ```
 
-> 注意：狮子角色使用 Canvas 绘制（色块模拟），**不需要**精灵图片文件。
+> 注意：像素角色使用 Canvas 绘制（矩形拼贴模拟），**不需要**精灵图片文件。
 
 ---
 
@@ -560,7 +556,7 @@ images/
 | 玩家速度 | 160 | `gameConfig.PLAYER.SPEED` | 像素/秒 |
 | 玩家绘制尺寸 | 48 | `gameConfig.PLAYER.SIZE` | 像素 |
 | 摇杆半径 | 45 | `gameConfig.UI.JOYSTICK_RADIUS` | 虚拟摇杆触摸检测半径 |
-| 动画帧间隔 | 200ms | `gameConfig.ANIMATION.FRAME_DURATION` | 狮子行走动画 |
+| 动画帧间隔 | 200ms | `gameConfig.ANIMATION.FRAME_DURATION` | 角色行走动画 |
 | 碰撞检测开关 | false | `gameConfig.BUILDINGS.COLLISION_ENABLED` | 当前未启用建筑碰撞 |
 
 > 注意：`data/buildings.js` 也导出了 `SPAWN = { x: 940, y: 960 }` 和 `MAP_SIZE`，但 `gameStore` 和页面代码实际引用的是 `config/gameConfig.js` 中的值。**以 gameConfig.js 为准。**

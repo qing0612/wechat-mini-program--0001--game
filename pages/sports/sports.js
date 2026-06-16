@@ -19,6 +19,7 @@ const {
   TouchDispatcher
 } = require('../../controllers/index.js');
 const { sportsRenderer } = require('../../renderers/index.js');
+const { audioManager } = require('../../utils/index.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
 const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
 const { PLAYER, SPORTS_MAP, ANIMATION } = require('../../config/index.js');
@@ -120,6 +121,9 @@ Page({
     this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
     setTimeout(() => { if (this.progress) this.progress.start(); }, 50);
 
+    // 播放地图背景音乐（sports 是 map 的子场景，共用 map 音乐）
+    audioManager.playWithMuteCheck('map');
+
     if (this.canvas && !this.running) {
       this.running = true;
       this.lastTime = 0;
@@ -132,6 +136,8 @@ Page({
     // 仅暂停游戏循环，不销毁资源（用户可能还会回来）
     this.running = false;
     if (this.timer) this.timer.stop();
+    // 停止音频（sports 页用 map 音乐）
+    audioManager.stop();
     if (this.playerCtrl && gameStore) {
       const p = this.playerCtrl.getPlayerPos();
       const d = this.playerCtrl.getPlayerDir();

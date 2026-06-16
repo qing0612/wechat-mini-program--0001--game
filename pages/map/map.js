@@ -23,6 +23,7 @@ const {
   TouchDispatcher
 } = require('../../controllers/index.js');
 const { campusRenderer } = require('../../renderers/index.js');
+const { audioManager } = require('../../utils/index.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
 const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
 const { PLAYER, MAP, UI, ANIMATION } = require('../../config/index.js');
@@ -179,6 +180,9 @@ Page({
       this._weather.setSeason(this._season);
     }
 
+    // 播放地图背景音乐
+    audioManager.playWithMuteCheck('map');
+
     // 恢复游戏循环
     if (this.canvas && !this.running) {
       this.running = true;
@@ -192,6 +196,8 @@ Page({
     // 仅暂停游戏循环，不销毁资源（用户可能还会回来）
     this.running = false;
     if (this.timer) this.timer.stop();
+    // 停止地图音乐
+    audioManager.stop();
     // 保存玩家位置
     if (this.playerCtrl && gameStore) {
       const p = this.playerCtrl.getPlayerPos();
