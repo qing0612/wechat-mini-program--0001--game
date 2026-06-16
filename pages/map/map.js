@@ -1,14 +1,31 @@
-// c:\Users\yibohe\Desktop\小程序-代码\pages\map\map.js
-const Joystick = require('../../utils/joystick.js');
+// pages/map/map.js - 校园地图（模块化组装版）
+// 原代码约 634 行，现在约 190 行。具体工作分解到：
+//   renderers/campusRenderer.js  - 地图背景 / 建筑触发区 / 日夜遮罩
+//   controllers/CanvasBootstrap   - Canvas 初始化 / 重试 / 缩放
+//   controllers/PlayerController  - 玩家移动 / 方向 / 边界 / 防抖保存
+//   controllers/BuildingController - 建筑触发检测 / 弹窗 / 冷却期
+//   controllers/ProgressLoader    - 加载进度条
+//   controllers/GameTimer         - 游戏计时器（00:00）
+//   controllers/WeatherManager    - 季节 → 天气（雨/雪/无）
+//   controllers/TouchDispatcher   - 触摸 → 摇杆
+//
+// 本文件只负责：初始化各模块、组装生命周期、绑定页面按钮与分享
+
+const { gameStore } = require('../../store/index.js');
+const { buildingService } = require('../../services/index.js');
+const {
+  CanvasBootstrap,
+  PlayerController,
+  BuildingController,
+  ProgressLoader,
+  GameTimer,
+  WeatherManager,
+  TouchDispatcher
+} = require('../../controllers/index.js');
+const { campusRenderer } = require('../../renderers/index.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
 const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
-const gameStore = require('../../store/gameStore.js');
-const gameConfig = require('../../config/gameConfig.js');
-const buildingService = require('../../services/buildingService.js');
-const audioManager = require('../../utils/audioManager.js');
-const WeatherEffect = require('../../utils/weatherEffect.js');
-
-const { PLAYER, MAP, UI } = gameConfig;
+const { PLAYER, MAP, UI, ANIMATION } = require('../../config/index.js');
 
 Page({
   data: {
@@ -28,547 +45,265 @@ Page({
     loadStageText: '资源加载中...'
   },
 
+  // ====== 初始化：恢复位置 + 订阅 state 变更 ======
   onLoad() {
-    this.joystick = new Joystick({ radius: UI.JOYSTICK_RADIUS });
-    this.anim = new SpriteAnimator({ 
-      frameCount: gameConfig.ANIMATION.FRAME_COUNT, 
-      frameDuration: gameConfig.ANIMATION.FRAME_DURATION 
-    });
-    this.canvas = null;
-    this.ctx = null;
-    this.mapImg = null;
-    this.running = false;
-    this.lastTime = 0;
-    this.frameCount = 0;
-    this.canvasReady = false;
-    this.resizeTimer = null;
-    this._resizeHandler = null;
-    this.season = 'spring';
-    // 重置模态框状态
-    this.modalShowing = false;
-    this.modalDismissed = false;
-    // 设置冷却期，防止立即触发建筑对话框
-    this.buildingCooldown = true;
-    setTimeout(() => {
-      this.buildingCooldown = false;
-    }, 2000); // 2秒冷却期
-
-    // 游戏计时器
-    this.gameSeconds = 0;
-    this.timerInterval = null;
-
-    // 从状态管理中恢复之前保存的位置和状态
     const state = gameStore.getState();
-    this.player = { x: state.player.x || PLAYER.SPAWN_X, y: state.player.y || PLAYER.SPAWN_Y };
-    this.playerDir = state.player.direction || 'down';
-    // 恢复之前是否在触发区域的状态
-    this.isInTriggerZone = state.player.inTriggerZone || false;
-    // 恢复日夜状态
-    this.isDay = state.isDay;
-
-    this.unsubscribe = gameStore.subscribe(this.handleStateChange.bind(this));
-  },
-
-  handleStateChange(state) {
-    this.player = { x: state.player.x, y: state.player.y };
-    this.playerDir = state.player.direction;
-    this.isDay = state.isDay;
-    this.season = state.season;
-    this._updateWeatherEffect();
+    this._savedState = state;
+    this._season = state.season || 'spring';
+    this._isDay = state.isDay;
+    // Joystick 不依赖 Canvas，可立即创建（触摸事件早于 Canvas ready）
+    const Joystick = require('../../utils/joystick.js');
+    this.joystick = new Joystick({ radius: UI.JOYSTICK_RADIUS });
+    this.unsubscribe = gameStore.subscribe((newState) => {
+      this._season = newState.season || this._season;
+      this._isDay = newState.isDay;
+      if (this._weather) this._weather.setSeason(this._season);
+    });
   },
 
   onReady() {
-    if (!this.canvasReady) {
-      this.initCanvas(0);
-    }
-  },
-
-  initCanvas(retry) {
-    const query = this.createSelectorQuery();
-    query.select('#gameCanvas').fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) {
-        if (retry < 50) {
-          setTimeout(() => this.initCanvas(retry + 1), 200);
-        } else {
-          console.warn('Canvas 初始化失败,已重试50次');
-          wx.showToast({ title: '画布加载失败', icon: 'none' });
-        }
-        return;
-      }
-
-      const cssW = res[0].width;
-      const cssH = res[0].height;
-
-      if (cssW > 0 && cssH > 0 && cssW < cssH) {
-        if (retry < 50) {
-          setTimeout(() => this.initCanvas(retry + 1), 200);
-          return;
-        }
-      }
-
-      const canvas = res[0].node;
-      this.canvas = canvas;
-      const winInfo = wx.getWindowInfo();
-      const dpr = winInfo.pixelRatio || 2;
-
-      canvas.width = cssW * dpr;
-      canvas.height = cssH * dpr;
-      this.ctx = canvas.getContext('2d');
-      this.sysInfo = winInfo;
-      this.viewW = cssW;
-      this.viewH = cssH;
-
-      this.weatherEffect = new WeatherEffect(canvas);
-      this.weatherEffect.init(canvas.width, canvas.height);
-
-      const jRadius = Math.min(winInfo.windowHeight * 0.15, 50);
-      this.joystick = new Joystick({ radius: jRadius });
-      this.setData({ joystickBaseR: Math.round(jRadius) });
-
-      this.tryLoadMap();
-      this.canvasReady = true;
-
-      // 启动进度条
-      this._startProgress();
-
-      // 启动游戏循环
-      this.running = true;
-      gameStore.startGame();
-      this.lastTime = 0;
-      this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
+    this._bootstrap = new CanvasBootstrap(this, {
+      canvasId: '#gameCanvas',
+      onReady: (env) => this._onCanvasReady(env)
     });
+    this._bootstrap.init();
   },
 
-  _startProgress() {
-    if (this._progressTimer) clearInterval(this._progressTimer);
-    this._progressTimer = setInterval(() => {
-      let current = this.data.loadProgress;
-      let next = current;
-      if (current < 30) {
-        next = current + 2;
-        if (next >= 30) this.setData({ loadStageText: '初始化画布...' });
-      } else if (current < 70) {
-        next = current + 1.5;
-        if (next >= 50) this.setData({ loadStageText: '加载地图资源...' });
-        if (this.mapLoaded && next > 70) next = 70;
-      } else if (current < 100 && this.mapLoaded) {
-        next = current + 3;
-        if (next >= 85) this.setData({ loadStageText: '准备就绪...' });
-      } else if (current < 100 && !this.mapLoaded && current < 90) {
-        next = current + 0.5;
+  _onCanvasReady(env) {
+    this.canvas = env.canvas;
+    this.ctx = env.ctx;
+    this.viewW = env.viewW;
+    this.viewH = env.viewH;
+    this.dpr = env.dpr;
+    this.sysInfo = env.sysInfo;
+    this.frameCount = 0;
+
+    // 动画
+    this.anim = new SpriteAnimator({
+      frameCount: ANIMATION.FRAME_COUNT,
+      frameDuration: ANIMATION.FRAME_DURATION
+    });
+
+    // 天气效果
+    this._weather = new WeatherManager({
+      canvas: this.canvas,
+      width: this.canvas.width,
+      height: this.canvas.height
+    });
+    this._weather.setSeason(this._season);
+
+    // 玩家控制器
+    const state = this._savedState || gameStore.getState();
+    this.playerCtrl = new PlayerController({
+      joystick: this.joystick,
+      mapSize: { width: MAP.WIDTH, height: MAP.HEIGHT },
+      playerSize: PLAYER.SIZE,
+      speed: PLAYER.SPEED,
+      spawnX: state.player.x || PLAYER.SPAWN_X,
+      spawnY: state.player.y || PLAYER.SPAWN_Y,
+      spawnDir: state.player.direction || 'down',
+      dirFromVector: dirFromVector,
+      onSave: (x, y, dir) => {
+        gameStore.updatePlayerPos(x, y);
+        gameStore.updatePlayerDirection(dir);
       }
-      if (next >= 100) {
-        next = 100;
-        clearInterval(this._progressTimer);
-        this._progressTimer = null;
-        setTimeout(() => {
-          this.setData({ loadVisible: false });
-        }, 300);
+    });
+
+    // 建筑触发
+    this.buildingCtrl = new BuildingController({
+      buildingService,
+      onEnter: (bld) => {
+        if (bld.isSportsField) {
+          wx.navigateTo({ url: '/pages/sports/sports' });
+        } else {
+          wx.navigateTo({ url: '/pages/building/building?id=' + bld.id });
+        }
       }
-      if (next !== current) this.setData({ loadProgress: Math.round(next) });
-    }, 50);
+    });
+    this.buildingCtrl.enableCooldown(2000);
+    this.buildingCtrl.isInTriggerZone = state.player.inTriggerZone || false;
+
+    // 触摸分发
+    this.touch = new TouchDispatcher(this, this.joystick);
+
+    // 加载进度条 + 背景图
+    this.progress = new ProgressLoader(this, {
+      stageText2: '加载地图资源...'
+    });
+    this.progress.start();
+    this._tryLoadMap();
+
+    // 计时器
+    this.timer = new GameTimer(this);
+
+    // 窗口 resize
+    this._bootstrap.bindResize();
+
+    // 启动主循环
+    this.running = true;
+    this.lastTime = 0;
+    this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
   },
 
-  tryLoadMap() {
+  _tryLoadMap() {
     if (!this.canvas) return;
-    this.mapImg = this.canvas.createImage();
-    this.mapImg.onload = () => {
+    const img = this.canvas.createImage();
+    img.onload = () => {
+      this.mapImg = img;
       this.mapLoaded = true;
+      if (this.progress) this.progress.setMapLoaded(true);
     };
-    this.mapImg.onerror = () => {
-      this.mapLoaded = false;
-      console.warn('地图图片加载失败: /images/map-bg.png');
-      this.mapLoaded = true;
+    img.onerror = () => {
+      this.mapLoaded = true; // 降级：使用占位渲染
+      if (this.progress) this.progress.setMapLoaded(true);
     };
-    this.mapImg.src = '/images/map-bg.png';
+    img.src = '/images/map-bg.png';
   },
-
-  _updateWeatherEffect() {
-    if (!this.weatherEffect) return;
-  
-    const weatherType = this.season === 'summer' ? 'rain' : 
-                        this.season === 'winter' ? 'snow' : 'none';
-  
-    this.weatherEffect.setType(weatherType);
-    if (weatherType !== 'none' && !this.weatherEffect.running) {
-      this.weatherEffect.start();
-    } else if (weatherType === 'none' && this.weatherEffect.running) {
-      this.weatherEffect.stop();
-    }
-},
 
   onShow() {
-    console.log('Map page onShow');
-
-    // 从其他页面返回时重新显示过渡进度条
     this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
-    setTimeout(() => this._startProgress(), 50);
-
-    // 重置模态框状态（从其他页面返回时）
-    this.modalShowing = false;
-    this.modalDismissed = false;
-    // 在 onShow 中更新天气特效
-    const state = gameStore.getState();
-    this.season = state.season || 'spring';
-    this._updateWeatherEffect();
-    // 标记刚从其他页面返回，避免立即触发建筑对话框
-    this.justReturned = true;
-    // 设置冷却期，防止立即重新触发建筑进入提示
-    this.buildingCooldown = true;
     setTimeout(() => {
-      this.buildingCooldown = false;
-      this.justReturned = false;
-    }, 2000); // 2秒冷却期
+      if (this.progress) this.progress.start();
+    }, 50);
 
-    // 从状态管理中恢复是否在触发区域的状态，这样返回时不会因为"进入"建筑区域而触发弹窗
-    this.isInTriggerZone = state.player.inTriggerZone || false;
+    // 从其他页面返回时重置建筑冷却期
+    if (this.buildingCtrl) {
+      this.buildingCtrl.onShowReturn();
+    }
+    if (this._weather) this._weather.setSeason(this._season);
 
-    // 确保游戏循环运行
+    // 恢复游戏循环
     if (this.canvas && !this.running) {
       this.running = true;
       this.lastTime = 0;
-      this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
+      this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
     }
-
-    // 启动计时器
-    if (!this.timerInterval) {
-      this.timerInterval = setInterval(() => {
-        this.gameSeconds++;
-        const minutes = Math.floor(this.gameSeconds / 60);
-        const seconds = this.gameSeconds % 60;
-        this.setData({
-          gameTime: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        });
-      }, 1000);
-    }
-
-    // 延迟播放音乐，避免影响游戏初始化
-    setTimeout(() => {
-      audioManager.playWithMuteCheck('map');
-    }, 100);
-
-    if (!this._resizeHandler) {
-      this._resizeHandler = (res) => this._onResize(res);
-    }
-    wx.onWindowResize(this._resizeHandler);
-  },
-
-  _onResize(res) {
-    if (!this.canvas) return;
-    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-    this.resizeTimer = setTimeout(() => {
-      const query = this.createSelectorQuery();
-      query.select('#gameCanvas').fields({ node: true, size: true }).exec((r) => {
-        if (!r || !r[0]) return;
-        const cssW = r[0].width;
-        const cssH = r[0].height;
-        if (cssW <= 0 || cssH <= 0) return;
-        if (Math.abs(cssW - this.viewW) < 1 && Math.abs(cssH - this.viewH) < 1) return;
-
-        const winInfo = wx.getWindowInfo();
-        const dpr = winInfo.pixelRatio || 2;
-        this.canvas.width = cssW * dpr;
-        this.canvas.height = cssH * dpr;
-        this.sysInfo = winInfo;
-        this.viewW = cssW;
-        this.viewH = cssH;
-
-        const jRadius = Math.min(cssH * 0.15, 50);
-        this.joystick = new Joystick({ radius: jRadius });
-        this.setData({ joystickBaseR: Math.round(jRadius) });
-
-        if (!this.running) {
-          this.running = true;
-          this.lastTime = 0;
-          this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
-        }
-      });
-    }, 100);
+    if (this.timer) this.timer.start();
   },
 
   onHide() {
-    this.cleanup();
+    this._cleanup();
   },
 
   onUnload() {
-    this.cleanup();
-    if (this.unsubscribe) {
-      this.unsubscribe();
-    }
+    this._cleanup();
+    if (this.unsubscribe) this.unsubscribe();
   },
 
-  cleanup() {
+  _cleanup() {
     this.running = false;
-    if (this._progressTimer) {
-      clearInterval(this._progressTimer);
-      this._progressTimer = null;
+    if (this.progress) this.progress.destroy();
+    if (this.timer) this.timer.destroy();
+    if (this._weather) this._weather.destroy();
+    if (this.playerCtrl) {
+      this.playerCtrl.forceSave();
+      this.playerCtrl.destroy();
     }
-    gameStore.stopGame();
-    gameStore.updatePlayerPos(this.player.x, this.player.y);
-    gameStore.updatePlayerDirection(this.playerDir);
-    // 保存当前是否在触发区域的状态
-    gameStore.setInTriggerZone(this.isInTriggerZone || false);
-
-    // 停止计时器
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-
-    if (this.weatherEffect) {
-      this.weatherEffect.stop();
-    }
-
-    if (this._resizeHandler) {
-      wx.offWindowResize(this._resizeHandler);
-    }
-    if (this.resizeTimer) {
-      clearTimeout(this.resizeTimer);
-      this.resizeTimer = null;
+    if (this.buildingCtrl) this.buildingCtrl.destroy();
+    if (this._bootstrap) this._bootstrap.destroy();
+    if (gameStore) {
+      gameStore.stopGame();
+      const p = this.playerCtrl ? this.playerCtrl.getPlayerPos() : null;
+      const pd = this.playerCtrl ? this.playerCtrl.getPlayerDir() : null;
+      if (p) {
+        gameStore.updatePlayerPos(p.x, p.y);
+        if (pd) gameStore.updatePlayerDirection(pd);
+      }
+      gameStore.setInTriggerZone(this.buildingCtrl ? this.buildingCtrl.isInTriggerZone : false);
     }
   },
 
-  // 防抖保存位置
-  _debounceSavePosition() {
-    if (this.saveTimer) clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => {
-      gameStore.updatePlayerPos(this.player.x, this.player.y);
-      gameStore.updatePlayerDirection(this.playerDir);
-    }, 200);
-  },
-
-  gameLoop(ts) {
+  // ====== 主循环 ======
+  _gameLoop(ts) {
     if (!this.running || !this.canvas) return;
-    const dt = this.lastTime ? Math.min(ts - this.lastTime, 50) : 16;
+    const dt = this.lastTime ? Math.min((ts - this.lastTime) / 1000, 0.05) : 0.016;
     this.lastTime = ts;
-    this.update(dt / 1000);
-    this.render();
-    this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
+    this._update(dt);
+    this._render();
+    this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
   },
 
-  update(dt) {
+  _update(dt) {
     this.frameCount++;
 
-    if (this.modalShowing) {
-      this.joystick.end();
-      this.moving = false;
-      this.setData({ joystickVisible: false, stickX: 0, stickY: 0 });
-    } else {
-      const dir = this.joystick.getDirection();
-      if (dir.magnitude > 0) {
-        let newX = this.player.x + dir.x * PLAYER.SPEED * dt;
-        let newY = this.player.y + dir.y * PLAYER.SPEED * dt;
-
-        const halfSize = PLAYER.SIZE / 2;
-        newX = Math.max(halfSize, Math.min(MAP.WIDTH - halfSize, newX));
-        newY = Math.max(halfSize, Math.min(MAP.HEIGHT - halfSize, newY));
-
-        this.player.x = newX;
-        this.player.y = newY;
-        this.moving = true;
-        this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
-        // 防抖保存位置，避免每帧写Storage
-        this._debounceSavePosition();
-      } else {
-        this.moving = false;
-      }
+    // 弹窗期间禁用玩家移动
+    if (this.buildingCtrl && this.buildingCtrl.modalShowing) {
+      if (this.touch) this.touch.setBlocked(true);
+    } else if (this.touch) {
+      this.touch.setBlocked(false);
     }
 
-    this.anim.tick(dt * 1000, this.moving);
+    // 玩家移动
+    if (this.playerCtrl) this.playerCtrl.update(dt);
+    this.anim.tick(dt * 1000, this.playerCtrl ? this.playerCtrl.isMoving() : false);
 
-    if (this.moving && this.modalDismissed) {
-      this.modalDismissed = false;
+    // 建筑触发检测
+    if (this.buildingCtrl && this.playerCtrl) {
+      const pos = this.playerCtrl.getPlayerPos();
+      this.buildingCtrl.update(pos.x, pos.y);
     }
 
-    const bld = buildingService.checkBuildingTrigger(this.player.x, this.player.y);
-
-    if (bld) {
-      // 只有从外部进入时才触发（isInTriggerZone 从 false 变为 true）
-      // 并且不是刚从其他页面返回，以及不在冷却期内
-      if (!this.isInTriggerZone && !this.modalShowing && !this.modalDismissed && !this.buildingCooldown) {
-        this.isInTriggerZone = true;
-        this.modalShowing = true;
-        this.moving = false;
-        
-        wx.showModal({
-          title: bld.name,
-          content: '是否想要进入这个建筑并了解它的历史？',
-          confirmText: '是',
-          cancelText: '否',
-          success: (res) => {
-            this.modalShowing = false;
-            this.modalDismissed = true;
-            if (res.confirm) {
-              // 检查是否是运动场入口，若是则跳转到运动场地图
-              if (bld.isSportsField) {
-                wx.navigateTo({
-                  url: '/pages/sports/sports'
-                });
-              } else {
-                wx.navigateTo({
-                  url: '/pages/building/building?id=' + bld.id
-                });
-              }
-            }
-          }
-        });
-      } else {
-        // 在触发区域内，更新标志
-        this.isInTriggerZone = true;
-      }
-    } else {
-      // 离开触发区域，重置标志
-      this.isInTriggerZone = false;
-      this.modalDismissed = false;
-      this.buildingCooldown = false;
-    }
-
-    if (this.frameCount % UI.UPDATE_INTERVAL === 0) {
+    // 每 N 帧刷新一次小地图 + 坐标 UI（避免每帧 setData）
+    if (this.frameCount % UI.UPDATE_INTERVAL === 0 && this.playerCtrl) {
+      const pos = this.playerCtrl.getPlayerPos();
       this.setData({
-        minimapPlayerX: (this.player.x / MAP.WIDTH) * 100,
-        minimapPlayerY: (this.player.y / MAP.HEIGHT) * 100,
-        coordX: Math.round(this.player.x),
-        coordY: Math.round(this.player.y)
+        minimapPlayerX: (pos.x / MAP.WIDTH) * 100,
+        minimapPlayerY: (pos.y / MAP.HEIGHT) * 100,
+        coordX: Math.round(pos.x),
+        coordY: Math.round(pos.y)
       });
     }
   },
 
-  render() {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    const dpr = this.sysInfo.pixelRatio;
+  _render() {
+    if (!this.ctx || !this.playerCtrl) return;
 
-    // 根据日夜状态设置背景颜色
-    ctx.fillStyle = this.isDay ? '#ffffff' : '#000000';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    ctx.save();
-    ctx.scale(dpr, dpr);
-
-    const cam = computeCamera(this.player.x, this.player.y, this.viewW, this.viewH, MAP.WIDTH, MAP.HEIGHT);
-
-    if (this.mapLoaded && this.mapImg) {
-      ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
-      // 夜间模式时添加半透明黑色遮罩
-      if (!this.isDay) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(0, 0, this.viewW, this.viewH);
-      }
-    } else {
-      this.drawPlaceholderMap(ctx, cam);
-    }
-
-    this.drawBuildingZones(ctx, cam);
-
-    const sp = worldToScreen(this.player.x, this.player.y, cam);
-    drawPlayer(ctx, sp.x, sp.y, this.moving, this.anim.frameIndex, this.playerDir);
-
-    ctx.restore();
-
-    // 渲染天气特效（在所有内容之上）
-    this._renderWeatherEffect();
-  },
-
-  _renderWeatherEffect() {
-    if (!this.weatherEffect || this.weatherEffect.type === 'none') return;
-    
-    this.weatherEffect.update();
-    this.weatherEffect.render();
-  },
-
-  drawPlaceholderMap(ctx, cam) {
-    ctx.fillStyle = '#0f0f1a';
-    ctx.fillRect(0, 0, this.viewW, this.viewH);
-
-    ctx.strokeStyle = '#1e1e2a';
-    ctx.lineWidth = 1;
-    const step = 80;
-    for (let x = -(cam.x % step); x < this.viewW; x += step) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.viewH); ctx.stroke();
-    }
-    for (let y = -(cam.y % step); y < this.viewH; y += step) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.viewW, y); ctx.stroke();
-    }
-
-    ctx.strokeStyle = '#8B4513';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(-cam.x, -cam.y, MAP.WIDTH, MAP.HEIGHT);
-
-    ctx.strokeStyle = '#A0A070';
-    ctx.lineWidth = 16;
-    ctx.beginPath();
-    ctx.moveTo(1000 - cam.x, 0); ctx.lineTo(1000 - cam.x, MAP.HEIGHT - cam.y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, 600 - cam.y); ctx.lineTo(MAP.WIDTH - cam.x, 600 - cam.y);
-    ctx.stroke();
-
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(200 - cam.x, 200 - cam.y, 300, 200);
-    ctx.fillRect(1400 - cam.x, 300 - cam.y, 250, 180);
-    ctx.fillRect(300 - cam.x, 700 - cam.y, 200, 150);
-
-    ctx.fillStyle = '#5a5a6e';
-    ctx.font = '16px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('地图加载中...', this.viewW / 2, this.viewH / 2);
-  },
-
-  drawBuildingZones(ctx, cam) {
-    ctx.globalAlpha = 0;
-    const colors = ['#FF6B35', '#4ECDC4', '#FFE66D', '#A8D8EA'];
-    const buildings = buildingService.getAllBuildings();
-    
-    buildings.forEach((b, i) => {
-      const zone = b.triggerZone;
-      const sp = worldToScreen(zone.x, zone.y, cam);
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.fillRect(sp.x, sp.y, zone.w, zone.h);
-      ctx.strokeStyle = colors[i % colors.length];
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sp.x, sp.y, zone.w, zone.h);
-      ctx.globalAlpha = 0;
-      ctx.fillStyle = '#fff';
-      ctx.font = '14px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(b.name, sp.x + zone.w / 2, sp.y + zone.h / 2 + 5);
+    // 1. 地图（含日夜遮罩 + 建筑触发区）
+    const cam = computeCamera(
+      this.playerCtrl.x, this.playerCtrl.y,
+      this.viewW, this.viewH, MAP.WIDTH, MAP.HEIGHT
+    );
+    campusRenderer.renderCampus(this.ctx, {
+      cam,
+      mapImg: this.mapImg,
+      mapLoaded: this.mapLoaded,
+      isDay: this._isDay,
+      viewW: this.viewW,
+      viewH: this.viewH,
+      dpr: this.dpr,
+      mapW: MAP.WIDTH,
+      mapH: MAP.HEIGHT
     });
-    ctx.globalAlpha = 1;
-  },
-
-  onTouchStart(e) {
-    const touch = e.touches[0];
-    this.joystick.start(touch);
-    this.setData({
-      joystickVisible: true,
-      joystickBaseX: touch.clientX,
-      joystickBaseY: touch.clientY,
-      stickX: 0,
-      stickY: 0
+    campusRenderer.renderBuildingZones(this.ctx, {
+      cam,
+      buildings: buildingService.getAllBuildings(),
+      dpr: this.dpr,
+      viewW: this.viewW,
+      viewH: this.viewH
     });
+
+    // 2. 玩家（在 Canvas 2D 坐标系，已按 dpr 缩放）
+    this.ctx.save();
+    this.ctx.scale(this.dpr, this.dpr);
+    const sp = worldToScreen(this.playerCtrl.x, this.playerCtrl.y, cam);
+    drawPlayer(
+      this.ctx, sp.x, sp.y,
+      this.playerCtrl.isMoving(),
+      this.anim.frameIndex,
+      this.playerCtrl.getPlayerDir()
+    );
+    this.ctx.restore();
+
+    // 3. 天气粒子
+    if (this._weather) this._weather.tick();
   },
 
-  onTouchMove(e) {
-    const touch = e.touches[0];
-    if (!this.joystick.active) return;
-    if (touch.identifier !== this.joystick.touchId) return;
-    this.joystick.update(touch);
-    const offset = this.joystick.getStickOffset();
-    this.setData({
-      stickX: offset.x,
-      stickY: offset.y
-    });
-  },
+  // ====== 触摸事件 ======
+  onTouchStart(e) { if (this.touch) this.touch.onStart(e); },
+  onTouchMove(e) { if (this.touch) this.touch.onMove(e); },
+  onTouchEnd(e) { if (this.touch) this.touch.onEnd(e); },
 
-  onTouchEnd(e) {
-    this.joystick.end();
-    this.setData({
-      joystickVisible: false,
-      stickX: 0,
-      stickY: 0
-    });
-  },
-
+  // ====== 导航按钮 ======
   onBack() {
     wx.showModal({
       title: '退出游戏',
@@ -577,21 +312,9 @@ Page({
       cancelText: '否',
       success: (res) => {
         if (res.confirm) {
-          this.running = false;
-          const state = gameStore.getState();
-          
-          // 如果关闭了数据保存（无痕模式），先设置为不保存
-          if (!state.saveOnQuit) {
-            gameStore.setState({ saveOnQuit: false });
-          } else {
-            // 正常模式：保存当前位置
-            gameStore.updatePlayerPos(this.player.x, this.player.y);
-          }
-          
+          this._cleanup();
           wx.navigateBack({
-            fail: () => {
-              wx.redirectTo({ url: '/pages/start/start' });
-            }
+            fail: () => wx.redirectTo({ url: '/pages/start/start' })
           });
         }
       }
@@ -599,18 +322,14 @@ Page({
   },
 
   goToSettings() {
-    wx.navigateTo({
-      url: '/pages/settings/settings'
-    });
+    wx.navigateTo({ url: '/pages/settings/settings' });
   },
 
   goToBackpack() {
-    wx.navigateTo({
-      url: '/pages/backpack/backpack'
-    });
+    wx.navigateTo({ url: '/pages/backpack/backpack' });
   },
 
-  // 分享给朋友
+  // ====== 分享 ======
   onShareAppMessage() {
     return {
       title: '河北师范大学像素校园',
@@ -620,7 +339,6 @@ Page({
     };
   },
 
-  // 分享到朋友圈
   onShareTimeline() {
     return {
       title: '河北师范大学像素校园 - 用像素风探索美丽校园！',

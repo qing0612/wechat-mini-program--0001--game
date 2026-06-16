@@ -1,13 +1,28 @@
-const Joystick = require('../../utils/joystick.js');
+// pages/sports/sports.js - 运动场子地图（模块化组装版）
+// 原代码约 297 行，现在约 140 行。具体工作分解到：
+//   renderers/sportsRenderer.js - 运动场背景 / 网格占位
+//   controllers/CanvasBootstrap  - Canvas 初始化 / 缩放
+//   controllers/PlayerController - 玩家移动 / 方向 / 边界
+//   controllers/ProgressLoader   - 加载进度条
+//   controllers/GameTimer        - 游戏计时器
+//   controllers/TouchDispatcher  - 触摸 → 摇杆
+//
+// 本文件只负责：组装各模块，提供导航与分享
+
+const { gameStore } = require('../../store/index.js');
+const { BUILDINGS } = require('../../data/buildings.js');
+const {
+  CanvasBootstrap,
+  PlayerController,
+  ProgressLoader,
+  GameTimer,
+  TouchDispatcher
+} = require('../../controllers/index.js');
+const { sportsRenderer } = require('../../renderers/index.js');
 const { computeCamera, worldToScreen } = require('../../utils/camera.js');
 const { SpriteAnimator, dirFromVector, drawPlayer } = require('../../utils/sprite.js');
-const gameStore = require('../../store/gameStore.js');
-const gameConfig = require('../../config/gameConfig.js');
-const { BUILDINGS } = require('../../data/buildings.js');
+const { PLAYER, SPORTS_MAP, ANIMATION } = require('../../config/index.js');
 
-const { PLAYER, SPORTS_MAP, UI } = gameConfig;
-
-// 获取运动场建筑的数据
 const sportsBuilding = BUILDINGS.find(b => b.id === 'sports');
 
 Page({
@@ -15,7 +30,7 @@ Page({
     gameTime: '00:00',
     stickX: 0,
     stickY: 0,
-    joystickBaseR: UI.JOYSTICK_RADIUS,
+    joystickBaseR: 45,
     joystickBaseX: 0,
     joystickBaseY: 0,
     joystickVisible: false,
@@ -24,274 +39,170 @@ Page({
     loadStageText: '资源加载中...'
   },
 
-  _startProgress() {
-    if (this._progressTimer) clearInterval(this._progressTimer);
-    this._progressTimer = setInterval(() => {
-      let current = this.data.loadProgress;
-      let next = current;
-      if (current < 30) {
-        next = current + 2;
-        if (next >= 30) this.setData({ loadStageText: '初始化画布...' });
-      } else if (current < 70) {
-        next = current + 1.5;
-        if (next >= 50) this.setData({ loadStageText: '加载运动场...' });
-        if (this.mapLoaded && next > 70) next = 70;
-      } else if (current < 100 && this.mapLoaded) {
-        next = current + 3;
-        if (next >= 85) this.setData({ loadStageText: '准备就绪...' });
-      } else if (current < 100 && !this.mapLoaded && current < 90) {
-        next = current + 0.5;
-      }
-      if (next >= 100) {
-        next = 100;
-        clearInterval(this._progressTimer);
-        this._progressTimer = null;
-        setTimeout(() => {
-          this.setData({ loadVisible: false });
-        }, 300);
-      }
-      if (next !== current) this.setData({ loadProgress: Math.round(next) });
-    }, 50);
-  },
-
   onLoad() {
-    this.joystick = new Joystick({ radius: UI.JOYSTICK_RADIUS });
-    this.anim = new SpriteAnimator({
-      frameCount: gameConfig.ANIMATION.FRAME_COUNT,
-      frameDuration: gameConfig.ANIMATION.FRAME_DURATION
-    });
-    this.canvas = null;
-    this.ctx = null;
-    this.running = false;
-    this.canvasReady = false;
-    this.lastTime = 0;
-
-    // 运动场专属地图尺寸
-    this.mapW = SPORTS_MAP.WIDTH;
-    this.mapH = SPORTS_MAP.HEIGHT;
-
-    // 从状态管理恢复运动场玩家位置，没有则使用默认出生点
-    const state = gameStore.getState();
-    this.player = state.sportsPlayer.x ?
-      { x: state.sportsPlayer.x, y: state.sportsPlayer.y } :
-      { x: SPORTS_MAP.SPAWN_X, y: SPORTS_MAP.SPAWN_Y };
-    this.playerDir = state.sportsPlayer.direction || 'up';
-    this.moving = false;
-
-    // 游戏计时器
-    this.gameSeconds = 0;
-    this.timerInterval = null;
+    const Joystick = require('../../utils/joystick.js');
+    this.joystick = new Joystick({ radius: 45 });
+    this._savedState = gameStore.getState();
   },
 
   onReady() {
-    if (!this.canvasReady) {
-      this.initCanvas(0);
-    }
-  },
-
-  initCanvas(retry) {
-    const query = this.createSelectorQuery();
-    query.select('#playerCanvas').fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) {
-        if (retry < 50) {
-          setTimeout(() => this.initCanvas(retry + 1), 200);
-        }
-        return;
-      }
-
-      const cssW = res[0].width;
-      const cssH = res[0].height;
-
-      // 横屏检查
-      if (cssW > 0 && cssH > 0 && cssW < cssH) {
-        if (retry < 50) {
-          setTimeout(() => this.initCanvas(retry + 1), 200);
-          return;
-        }
-      }
-
-      const canvas = res[0].node;
-      this.canvas = canvas;
-      
-      // 使用新 API 获取系统信息，兼容旧版
-      const winInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-      const dpr = winInfo.pixelRatio || 2;
-
-      // 设置 Canvas 2D 宽高
-      canvas.width = cssW * dpr;
-      canvas.height = cssH * dpr;
-      this.ctx = canvas.getContext('2d');
-      this.ctx.scale(dpr, dpr);
-      this.sysInfo = winInfo;
-      this.viewW = cssW;
-      this.viewH = cssH;
-
-      const jRadius = Math.min(winInfo.windowHeight * 0.15, 50);
-      this.joystick = new Joystick({ radius: jRadius });
-      this.setData({ joystickBaseR: Math.round(jRadius) });
-
-      // 加载背景图
-      this.tryLoadMap();
-
-      this.canvasReady = true;
-      this._startProgress();
-      this.running = true;
-      this.lastTime = 0;
-      this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
+    this._bootstrap = new CanvasBootstrap(this, {
+      canvasId: '#playerCanvas',
+      onReady: (env) => this._onCanvasReady(env)
     });
+    this._bootstrap.init();
   },
 
-  tryLoadMap() {
+  _onCanvasReady(env) {
+    this.canvas = env.canvas;
+    this.ctx = env.ctx;
+    this.viewW = env.viewW;
+    this.viewH = env.viewH;
+    this.dpr = env.dpr;
+    this.sysInfo = env.sysInfo;
+    this.frameCount = 0;
+
+    // 动画
+    this.anim = new SpriteAnimator({
+      frameCount: ANIMATION.FRAME_COUNT,
+      frameDuration: ANIMATION.FRAME_DURATION
+    });
+
+    // 玩家控制器（独立地图尺寸 + 独立出生点）
+    const state = this._savedState;
+    const hasSaved = state.sportsPlayer && typeof state.sportsPlayer.x === 'number';
+    this.playerCtrl = new PlayerController({
+      joystick: this.joystick,
+      mapSize: { width: SPORTS_MAP.WIDTH, height: SPORTS_MAP.HEIGHT },
+      playerSize: PLAYER.SIZE,
+      speed: PLAYER.SPEED,
+      spawnX: hasSaved ? state.sportsPlayer.x : SPORTS_MAP.SPAWN_X,
+      spawnY: hasSaved ? state.sportsPlayer.y : SPORTS_MAP.SPAWN_Y,
+      spawnDir: state.sportsPlayer.direction || 'up',
+      dirFromVector: dirFromVector
+    });
+
+    // 触摸
+    this.touch = new TouchDispatcher(this, this.joystick);
+
+    // 进度条 + 背景
+    this.progress = new ProgressLoader(this, {
+      stageText2: '加载运动场...'
+    });
+    this.progress.start();
+    this._tryLoadMap();
+
+    // 计时器
+    this.timer = new GameTimer(this);
+
+    // 启动循环
+    this.running = true;
+    this.lastTime = 0;
+    this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
+  },
+
+  _tryLoadMap() {
     if (!this.canvas) return;
-    this.mapImg = this.canvas.createImage();
-    this.mapImg.onload = () => { this.mapLoaded = true; };
-    this.mapImg.onerror = () => {
-      this.mapLoaded = false;
+    const img = this.canvas.createImage();
+    img.onload = () => {
+      this.mapImg = img;
       this.mapLoaded = true;
+      if (this.progress) this.progress.setMapLoaded(true);
     };
-    // 使用建筑数据中的 interiorImage 属性，避免硬编码路径
-    this.mapImg.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.png';
+    img.onerror = () => {
+      this.mapLoaded = true; // 降级到占位渲染
+      if (this.progress) this.progress.setMapLoaded(true);
+    };
+    img.src = sportsBuilding ? sportsBuilding.interiorImage : '/images/map/sports-bg.png';
   },
 
   onShow() {
     this.setData({ loadProgress: 0, loadVisible: true, loadStageText: '资源加载中...' });
-    setTimeout(() => this._startProgress(), 50);
+    setTimeout(() => { if (this.progress) this.progress.start(); }, 50);
 
-    // 恢复游戏循环
     if (this.canvas && !this.running) {
       this.running = true;
       this.lastTime = 0;
-      this.canvas.requestAnimationFrame((t) => this.gameLoop(t));
+      this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
     }
-    // 计时器
-    if (!this.timerInterval) {
-      this.timerInterval = setInterval(() => {
-        this.gameSeconds++;
-        const minutes = Math.floor(this.gameSeconds / 60);
-        const seconds = this.gameSeconds % 60;
-        this.setData({
-          gameTime: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        });
-      }, 1000);
-    }
+    if (this.timer) this.timer.start();
   },
 
-  gameLoop(t) {
-    if (!this.running || !this.canvas) return;
-    const dt = this.lastTime ? Math.min(t - this.lastTime, 50) : 16;
-    this.lastTime = t;
-    this.update(dt / 1000);
-    this.render();
-    this.canvas.requestAnimationFrame((t2) => this.gameLoop(t2));
-  },
+  onHide() { this._cleanup(); },
+  onUnload() { this._cleanup(); },
 
-  update(dt) {
-    const dir = this.joystick.getDirection();
-    if (dir.magnitude > 0) {
-      let newX = this.player.x + dir.x * PLAYER.SPEED * dt;
-      let newY = this.player.y + dir.y * PLAYER.SPEED * dt;
-      const halfSize = PLAYER.SIZE / 2;
-      newX = Math.max(halfSize, Math.min(this.mapW - halfSize, newX));
-      newY = Math.max(halfSize, Math.min(this.mapH - halfSize, newY));
-      this.player.x = newX;
-      this.player.y = newY;
-      this.moving = true;
-      this.playerDir = dirFromVector(dir.x, dir.y) || this.playerDir;
-    } else {
-      this.moving = false;
-    }
-    this.anim.tick(dt * 1000, this.moving);
-  },
-
-  render() {
-    const ctx = this.ctx;
-    if (!ctx) return;
-
-    // Canvas 2D 已在初始化时设置了 scale，直接使用 CSS 尺寸
-    ctx.fillStyle = '#0f0f1a';
-    ctx.fillRect(0, 0, this.viewW, this.viewH);
-
-    ctx.save();
-
-    // 使用统一的相机计算函数
-    const cam = computeCamera(this.player.x, this.player.y, this.viewW, this.viewH, this.mapW, this.mapH);
-
-    // 绘制背景
-    if (this.mapLoaded && this.mapImg) {
-      ctx.drawImage(this.mapImg, cam.x, cam.y, this.viewW, this.viewH, 0, 0, this.viewW, this.viewH);
-    } else {
-      // 占位：深色背景 + 细网格
-      ctx.fillStyle = '#0f0f1a';
-      ctx.fillRect(0, 0, this.viewW, this.viewH);
-      ctx.strokeStyle = '#1e1e2a';
-      ctx.lineWidth = 1;
-      const step = 80;
-      for (let x = -(cam.x % step); x < this.viewW; x += step) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.viewH); ctx.stroke();
-      }
-      for (let y = -(cam.y % step); y < this.viewH; y += step) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.viewW, y); ctx.stroke();
-      }
-    }
-
-    // 绘制玩家
-    const sp = worldToScreen(this.player.x, this.player.y, cam);
-    drawPlayer(ctx, sp.x, sp.y, this.moving, this.anim.frameIndex, this.playerDir);
-
-    ctx.restore();
-  },
-
-  onTouchStart(e) {
-    const touch = e.touches[0];
-    this.joystick.start(touch);
-    this.setData({
-      joystickVisible: true,
-      joystickBaseX: touch.clientX,
-      joystickBaseY: touch.clientY,
-      stickX: 0,
-      stickY: 0
-    });
-  },
-
-  onTouchMove(e) {
-    const touch = e.touches[0];
-    if (!this.joystick.active || touch.identifier !== this.joystick.touchId) return;
-    
-    // 直接更新摇杆（摇杆内部会计算相对于基点的偏移）
-    this.joystick.update(touch);
-    
-    const offset = this.joystick.getStickOffset();
-    this.setData({ stickX: offset.x, stickY: offset.y });
-  },
-
-  onTouchEnd() {
-    this.joystick.end();
-    this.setData({ joystickVisible: false, stickX: 0, stickY: 0 });
-  },
-
-  goBack() {
-    gameStore.updateSportsPlayer(this.player.x, this.player.y, this.playerDir);
-    wx.navigateBack();
-  },
-
-  onHide() {
-    this._stop();
-  },
-
-  onUnload() {
-    this._stop();
-  },
-
-  _stop() {
+  _cleanup() {
     this.running = false;
-    if (this._progressTimer) {
-      clearInterval(this._progressTimer);
-      this._progressTimer = null;
+    if (this.progress) this.progress.destroy();
+    if (this.timer) this.timer.destroy();
+    if (this.playerCtrl) {
+      const p = this.playerCtrl.getPlayerPos();
+      const d = this.playerCtrl.getPlayerDir();
+      gameStore.updateSportsPlayer(p.x, p.y, d);
+      this.playerCtrl.destroy();
     }
-    gameStore.updateSportsPlayer(this.player.x, this.player.y, this.playerDir);
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
+    if (this._bootstrap) this._bootstrap.destroy();
+  },
+
+  // ====== 主循环 ======
+  _gameLoop(ts) {
+    if (!this.running || !this.canvas) return;
+    const dt = this.lastTime ? Math.min((ts - this.lastTime) / 1000, 0.05) : 0.016;
+    this.lastTime = ts;
+    this._update(dt);
+    this._render();
+    this.canvas.requestAnimationFrame((t) => this._gameLoop(t));
+  },
+
+  _update(dt) {
+    this.frameCount++;
+    if (this.playerCtrl) this.playerCtrl.update(dt);
+    this.anim.tick(dt * 1000, this.playerCtrl ? this.playerCtrl.isMoving() : false);
+  },
+
+  _render() {
+    if (!this.ctx || !this.playerCtrl) return;
+    const cam = computeCamera(
+      this.playerCtrl.x, this.playerCtrl.y,
+      this.viewW, this.viewH, SPORTS_MAP.WIDTH, SPORTS_MAP.HEIGHT
+    );
+
+    sportsRenderer.renderSports(this.ctx, {
+      cam,
+      mapImg: this.mapImg,
+      mapLoaded: this.mapLoaded,
+      dpr: this.dpr,
+      viewW: this.viewW,
+      viewH: this.viewH,
+      mapW: SPORTS_MAP.WIDTH,
+      mapH: SPORTS_MAP.HEIGHT
+    });
+
+    // 玩家
+    this.ctx.save();
+    this.ctx.scale(this.dpr, this.dpr);
+    const sp = worldToScreen(this.playerCtrl.x, this.playerCtrl.y, cam);
+    drawPlayer(
+      this.ctx, sp.x, sp.y,
+      this.playerCtrl.isMoving(),
+      this.anim.frameIndex,
+      this.playerCtrl.getPlayerDir()
+    );
+    this.ctx.restore();
+  },
+
+  // ====== 触摸 ======
+  onTouchStart(e) { if (this.touch) this.touch.onStart(e); },
+  onTouchMove(e) { if (this.touch) this.touch.onMove(e); },
+  onTouchEnd(e) { if (this.touch) this.touch.onEnd(e); },
+
+  // ====== 导航 ======
+  goBack() {
+    if (this.playerCtrl) {
+      const p = this.playerCtrl.getPlayerPos();
+      const d = this.playerCtrl.getPlayerDir();
+      gameStore.updateSportsPlayer(p.x, p.y, d);
     }
+    wx.navigateBack();
   }
 });
