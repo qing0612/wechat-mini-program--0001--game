@@ -46,6 +46,7 @@ class SportsController {
     this.running = false;
     this.lastTime = 0;
     this._savedState = null;
+    this._firstShowDone = false;
 
     // 子控制器
     this.playerCtrl = null;
@@ -76,15 +77,16 @@ class SportsController {
   }
 
   onShow() {
-    // 轻微的资源加载反馈
-    this.onUiUpdate({
-      loadProgress: 0,
-      loadVisible: true,
-      loadStageText: '资源加载中...'
-    });
-    setTimeout(() => {
-      if (this.progress) this.progress.start();
-    }, 50);
+    // 仅从子页面返回时隐藏加载遮罩，首次加载不干预进度条
+    if (this._firstShowDone) {
+      this.onUiUpdate({
+        loadVisible: false,
+        navVisible: false,
+        navProgress: 0,
+        loadProgress: 100
+      });
+    }
+    this._firstShowDone = true;
 
     if (this.canvas && !this.running) {
       this.running = true;

@@ -8,7 +8,7 @@
 
 const { gameStore } = require('../../store/index.js');
 const { audioManager } = require('../../utils/index.js');
-const { SportsController } = require('../../controllers/index.js');
+const { NavController, SportsController } = require('../../controllers/index.js');
 
 Page({
   data: {
@@ -21,10 +21,17 @@ Page({
     joystickVisible: false,
     loadProgress: 0,
     loadVisible: true,
-    loadStageText: '资源加载中...'
+    loadStageText: '资源加载中...',
+    // NavController：预留字段
+    navVisible: false,
+    navProgress: 0,
+    navTitle: ''
   },
 
   onLoad() {
+    // 导航控制器：当前页面为 sports，层级 2
+    this.nav = new NavController(this, 'sports');
+
     this.sportsCtrl = new SportsController(this, {
       canvasId: '#playerCanvas',
       gameStore,
@@ -40,6 +47,10 @@ Page({
   },
 
   onShow() {
+    // 高→低返回准备：确保没有过渡遮罩残留
+    if (this.nav) this.nav.hideOverlay();
+    this.setData({ loadVisible: false });
+
     // 播放地图背景音乐（sports 是 map 的子场景，共用 map 音乐）
     audioManager.playWithMuteCheck('map');
 
@@ -55,6 +66,7 @@ Page({
 
   onUnload() {
     if (this.sportsCtrl) this.sportsCtrl.destroy();
+    if (this.nav) this.nav.destroy();
   },
 
   // === 触摸事件（转发给 SportsController） ===
@@ -62,7 +74,7 @@ Page({
   onTouchMove(e) { if (this.sportsCtrl) this.sportsCtrl.onTouchMove(e); },
   onTouchEnd(e) { if (this.sportsCtrl) this.sportsCtrl.onTouchEnd(e); },
 
-  // === 导航 ===
+  // === 导航：高→低，直接返回，无过渡 ===
   goBack() {
     // 保存运动场玩家位置
     if (this.sportsCtrl && this.sportsCtrl.playerCtrl && gameStore) {
@@ -70,6 +82,7 @@ Page({
       const d = this.sportsCtrl.playerCtrl.getPlayerDir();
       if (p) gameStore.updateSportsPlayer(p.x, p.y, d);
     }
-    wx.navigateBack();
+    // 使用 NavController.back：高→低直接 navigateBack，无过渡
+    this.nav.back({ fallbackUrl: '/pages/map/map' });
   }
 });

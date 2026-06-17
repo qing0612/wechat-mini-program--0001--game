@@ -19,10 +19,15 @@ Page({
     navTitle: ''
   },
 
-  onLoad() {
+  onLoad(options) {
     audioManager.init();
     // 初始化导航控制器：当前页面为 start，层级 0
     this.nav = new NavController(this, 'start');
+
+    // 从高层级页面跳转过来：无加载遮罩
+    if (options && options.skipLoad === '1') {
+      // start 页面没有加载遮罩，仅预留扩展
+    }
   },
 
   onShow() {

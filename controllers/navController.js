@@ -79,14 +79,26 @@ class NavController {
 
     // ---------- 第 1 步：解析目标层级 ----------
     const targetName = this._extractPageName(targetUrl);
-    const targetLevel = getLevel(targetName); // -1 表示未在配置中
+    const targetLevel = getLevel(targetName);
     const title = options.title || this._defaultTitle(targetName);
 
     // ---------- 第 2 步：方向判断（核心逻辑） ----------
-    // 高→低 或 同级：break 跳过过渡，直接跳转
-    if (targetLevel !== -1 && targetLevel <= this.level) {
+    // 高→低：使用 navigateBack（不创建新页面，不显示过渡）
+    // 同级：直接 navigateTo（不显示过渡，但保留页面栈）
+    if (targetLevel !== -1 && targetLevel < this.level) {
+      // 高→低：优先 navigateBack（返回已存在的目标页面，避免重复创建）
+      wx.navigateBack({
+        fail: () => {
+          // 兜底：如果栈中没有可返回的页面，用 redirectTo 跳转，跳过新页面的加载遮罩
+          wx.redirectTo({ url: targetUrl + (targetUrl.indexOf('?') > -1 ? '&' : '?') + 'skipLoad=1' });
+        }
+      });
+      return;
+    }
+    if (targetLevel !== -1 && targetLevel === this.level) {
+      // 同级：直接 navigateTo，不显示过渡
       this._doNavigate(targetUrl);
-      return; // 等价于 break：直接结束函数，不执行过渡动画代码
+      return;
     }
 
     // ---------- 第 3 步：低→高：执行像素过渡动画 ----------
@@ -107,12 +119,8 @@ class NavController {
         this.page.setData({ navProgress: 100 });
         clearInterval(this._timer);
         this._timer = null;
-        // 关键修复：先清理遮罩，再 navigateTo
-        // （navigateTo 会把当前页面压入后台，若先跳转后再 setData，后台页面的 setData 可能不生效
-        // 导致 navigateBack 返回时，页面的 navVisible 可能还是 true，造成"高→低也有过渡"的bug
         setTimeout(() => {
           this.page.setData({ navVisible: false, navProgress: 0 });
-          // 清理完成后再跳转，确保页面在进入后台前是干净的
           setTimeout(() => {
             this._doNavigate(targetUrl);
           }, 30);
@@ -134,8 +142,9 @@ class NavController {
     wx.navigateBack({
       fail: () => {
         if (options.fallbackUrl) {
-          // fallbackUrl 使用 redirectTo 作为兜底（关闭当前页，跳转到目标页）
-          wx.redirectTo({ url: options.fallbackUrl });
+          const url = options.fallbackUrl;
+          const sep = url.indexOf('?') > -1 ? '&' : '?';
+          wx.redirectTo({ url: url + sep + 'skipLoad=1' });
         }
       }
     });

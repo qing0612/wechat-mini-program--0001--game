@@ -70,6 +70,8 @@ class MapController {
     this._season = 'spring';
     this._isDay = true;
     this._savedState = null;
+    this._initialized = false;
+    this._firstShowDone = false;
 
     // 子控制器
     this.playerCtrl = null;
@@ -131,15 +133,17 @@ class MapController {
       this._weather.setSeason(this._season);
     }
 
-    // 重新显示进度条（轻微的资源加载反馈）
-    this.onUiUpdate({
-      loadProgress: 0,
-      loadVisible: true,
-      loadStageText: '资源加载中...'
-    });
-    setTimeout(() => {
-      if (this.progress) this.progress.start();
-    }, 50);
+    // 仅从子页面返回（building/sports → map）时隐藏加载遮罩
+    // 首次加载（start → map）不干预进度条
+    if (this._firstShowDone) {
+      this.onUiUpdate({
+        loadVisible: false,
+        navVisible: false,
+        navProgress: 0,
+        loadProgress: 100
+      });
+    }
+    this._firstShowDone = true;
 
     // 恢复游戏循环
     if (this.canvas && !this.running) {

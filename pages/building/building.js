@@ -9,6 +9,7 @@ Page({
     badgeImgError: false,
     badgeEarned: false,
     showBadgePopup: false,
+    loadVisible: true,
     // NavController：预留字段
     navVisible: false,
     navProgress: 0,
@@ -40,7 +41,9 @@ Page({
   },
 
   onShow() {
+    // 高→低：立即隐藏所有遮罩
     if (this.nav) this.nav.hideOverlay();
+    this.setData({ loadVisible: false });
   },
 
   onUnload() {

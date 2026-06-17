@@ -42,12 +42,18 @@ Page({
 
   // === 页面生命周期 ===
 
-  onLoad() {
+  onLoad(options) {
     const state = gameStore.getState();
     this._season = state.season || 'spring';
     this._isDay = state.isDay;
     // 导航控制器：当前页面为 map，层级 1
     this.nav = new NavController(this, 'map');
+
+    // 从高层级页面 redirectTo 跳转过来（兜底场景）：跳过加载遮罩
+    if (options && options.skipLoad === '1') {
+      this.setData({ loadVisible: false });
+    }
+
     this.unsubscribe = gameStore.subscribe((newState) => {
       this._season = newState.season || this._season;
       this._isDay = newState.isDay;
@@ -88,13 +94,13 @@ Page({
     this._season = state.season || this._season;
     this._isDay = state.isDay;
 
-    // 从 building/sports 页面返回：清除过渡遮罩（高→低，无过渡）
+    // 清除导航过渡遮罩（防止 forward 动画残留）
     if (this.nav) this.nav.hideOverlay();
 
     // 播放地图背景音乐
     audioManager.playWithMuteCheck('map');
 
-    // 恢复游戏循环
+    // 恢复游戏循环（mapController 内部管理加载遮罩的显示/隐藏）
     if (this.mapCtrl) this.mapCtrl.onShow();
   },
 
