@@ -166,8 +166,9 @@ class SportsController {
     this.progress.start();
     this._tryLoadMap();
 
-    // 计时器
+    // 计时器：创建后立即启动
     this.timer = new GameTimer(this.page);
+    this.timer.start();
 
     // 启动循环
     this.running = true;
