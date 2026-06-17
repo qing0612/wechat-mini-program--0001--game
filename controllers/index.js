@@ -9,6 +9,8 @@ const GameTimer = require('./gameTimer.js');
 const WeatherManager = require('./weatherManager.js');
 const TouchDispatcher = require('./touchDispatcher.js');
 const NavController = require('./navController.js');
+const MapController = require('./mapController.js');
+const SportsController = require('./sportsController.js');
 
 module.exports = {
   CanvasBootstrap,
@@ -18,5 +20,7 @@ module.exports = {
   GameTimer,
   WeatherManager,
   TouchDispatcher,
-  NavController
+  NavController,
+  MapController,
+  SportsController
 };

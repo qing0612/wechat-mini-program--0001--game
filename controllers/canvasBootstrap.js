@@ -47,10 +47,8 @@ class CanvasBootstrap {
       const cssW = res[0].width;
       const cssH = res[0].height;
 
-      // 横屏保护：如果 cssW < cssH，通常说明页面布局尚未稳定（移动端页面
-      // 应该是纵向，宽度小于高度是正常的，但游戏场景可能需要更大的宽度）。
-      // 这里保留原逻辑：仅在尺寸 > 0 时再判定
-      if (cssW > 0 && cssH > 0 && cssW < cssH) {
+      // 仅在尺寸为 0 时重试（布局尚未完成）
+      if (cssW === 0 || cssH === 0) {
         if (retry < this.maxRetries) {
           setTimeout(() => this._queryCanvas(retry + 1), this.retryDelay);
           return;

@@ -21,43 +21,58 @@ function _seasonTint(season, isDay) {
 }
 
 function renderCampus(ctx, options) {
-  const { cam, mapImg, mapLoaded, isDay, viewW, viewH, dpr, season } = options;
+  const { cam, mapImg, mapLoaded, isDay, viewW, viewH, dpr, season, mapW, mapH } = options;
   const tint = _seasonTint(season || 'spring', isDay);
 
+  // 背景色（用设备像素填充整个画布）
   ctx.fillStyle = tint.bg;
   ctx.fillRect(0, 0, viewW * dpr, viewH * dpr);
 
-  ctx.save();
-  ctx.scale(dpr, dpr);
-
   if (mapLoaded && mapImg) {
-    ctx.drawImage(mapImg, cam.x, cam.y, viewW, viewH, 0, 0, viewW, viewH);
+    // 地图图片：关键！drawImage 的源坐标不应该被 transform 影响
+    // cam.x, cam.y 是世界坐标（CSS 像素），直接作为图片的裁剪起点
+    // 目标：绘制到画布 (0,0)，大小为 viewW*dpr × viewH*dpr（设备像素）
+    ctx.drawImage(
+      mapImg,
+      cam.x, cam.y, viewW, viewH,           // 源：图片像素坐标（图片尺寸 = MAP.WIDTH × MAP.HEIGHT）
+      0, 0, viewW * dpr, viewH * dpr         // 目标：画布设备像素
+    );
+    // 季节遮罩
     if (tint.overlay) {
       ctx.fillStyle = tint.overlay;
-      ctx.fillRect(0, 0, viewW, viewH);
+      ctx.fillRect(0, 0, viewW * dpr, viewH * dpr);
     }
   } else {
-    _drawPlaceholder(ctx, cam, viewW, viewH, options.mapW, options.mapH, season || 'spring');
+    // 占位地图（用 CSS 像素坐标绘制，需要 scale dpr）
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    _drawPlaceholder(ctx, cam, viewW, viewH, mapW, mapH, season || 'spring');
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 function renderBuildingZones(ctx, options) {
-  const { cam, buildings, dpr, viewW, viewH } = options;
+  const { cam, buildings, dpr, viewW, viewH, currentBuilding } = options;
   ctx.save();
   ctx.scale(dpr, dpr);
-  ctx.globalAlpha = 0;
   buildings.forEach((b, i) => {
     const zone = b.triggerZone;
     if (!zone) return;
     const sp = worldToScreen(zone.x, zone.y, cam);
     const color = TRIGGER_COLORS[i % TRIGGER_COLORS.length];
+    const isActive = currentBuilding && currentBuilding.id === b.id;
+    // 未进入时：轻微可见（提示玩家这里有建筑）
+    // 进入触发区时：更明显的高亮
+    ctx.globalAlpha = isActive ? 0.45 : 0.15;
     ctx.fillStyle = color;
     ctx.fillRect(sp.x, sp.y, zone.w, zone.h);
+    ctx.globalAlpha = isActive ? 1.0 : 0.5;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = isActive ? 3 : 2;
     ctx.strokeRect(sp.x, sp.y, zone.w, zone.h);
-    ctx.fillStyle = '#fff';
+    // 建筑名称（始终可见）
+    ctx.globalAlpha = isActive ? 1.0 : 0.7;
+    ctx.fillStyle = '#ffffff';
     ctx.font = '14px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(b.name, sp.x + zone.w / 2, sp.y + zone.h / 2 + 5);

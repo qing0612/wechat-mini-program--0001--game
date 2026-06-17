@@ -85,4 +85,9 @@
   <view class="coord-display">
     <text class="coord-text">X:{{coordX}}  Y:{{coordY}}</text>
   </view>
+
+  <!-- 建筑进入浮动按钮（与 HTML 版一致：进入触发区才显示） -->
+  <view wx:if="{{showEnterBuildingBtn}}" class="enter-building-btn" bindtap="onEnterBuilding">
+    <text class="enter-building-text">进入「{{currentBuildingName}}」</text>
+  </view>
 </view>

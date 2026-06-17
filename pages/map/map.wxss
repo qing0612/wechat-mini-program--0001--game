@@ -149,6 +149,7 @@
   top: 0;
   left: 0;
   background: #0f0f1a;
+  z-index: 1;
 }
 
 /* 浮动摇杆(跟随触摸位置,不拦截事件) */
@@ -433,4 +434,36 @@
   height: 8rpx;
   background: linear-gradient(180deg, #5d4037 0%, #4e342e 100%);
   border-radius: 2rpx 2rpx 0 0;
+}
+
+/* =============== 建筑进入浮动按钮（与 HTML 版一致） =============== */
+.enter-building-btn {
+  position: fixed;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14rpx 36rpx;
+  background: linear-gradient(180deg, #f4a261 0%, #e76f51 100%);
+  border: 3rpx solid #1a1a2e;
+  border-radius: 6rpx;
+  z-index: 200;
+  box-shadow: 0 0 20rpx rgba(244, 162, 97, 0.5);
+  animation: pulseBtn 1.2s ease-in-out infinite;
+}
+
+.enter-building-text {
+  color: #1a1a2e;
+  font-size: 24rpx;
+  font-weight: bold;
+  letter-spacing: 2rpx;
+  font-family: monospace;
+}
+
+.enter-building-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+@keyframes pulseBtn {
+  0%, 100% { box-shadow: 0 0 40rpx rgba(244, 162, 97, 0.6); }
+  50% { box-shadow: 0 0 64rpx rgba(244, 162, 97, 0.9); }
 }

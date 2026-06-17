@@ -46,30 +46,30 @@ class ProgressLoader {
     let current = this._progress;
     let next = current;
 
-    if (current < 30) {
-      // 0-30%：轻柔推进，让用户看到"初始化画布..."
+    if (this._isMapLoaded) {
+      // 地图加载完成：快速推进到 100%
+      next = current + 8;
+      if (next >= 50 && this._stage < 2) {
+        this._stage = 2;
+        this.page.setData({ loadStageText: this.stageText2 });
+      }
+      if (next >= 85 && this._stage < 3) {
+        this._stage = 3;
+        this.page.setData({ loadStageText: this.stageText3 });
+      }
+    } else if (current < 30) {
       next = current + 1;
       if (next >= 30 && this._stage < 1) {
         this._stage = 1;
         this.page.setData({ loadStageText: this.stageText1 });
       }
     } else if (current < 70) {
-      // 30-70%：中速推进，展示"加载地图资源..."
       next = current + 0.8;
       if (next >= 50 && this._stage < 2) {
         this._stage = 2;
         this.page.setData({ loadStageText: this.stageText2 });
       }
-      if (this._isMapLoaded && next > 70) next = 70;
-    } else if (current < 100 && this._isMapLoaded) {
-      // 70-100%（已加载完成）：匀速推进到 100%
-      next = current + 1.5;
-      if (next >= 85 && this._stage < 3) {
-        this._stage = 3;
-        this.page.setData({ loadStageText: this.stageText3 });
-      }
-    } else if (current < 100 && !this._isMapLoaded && current < 90) {
-      // 70-90%（尚未加载完成）：缓慢增长，等待资源就绪
+    } else if (current < 90) {
       next = current + 0.3;
     }
 
