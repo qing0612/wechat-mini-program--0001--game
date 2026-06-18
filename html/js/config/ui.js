@@ -1,5 +1,0 @@
-// UI参数（HTML版·模块化）
-window.CFG_UI = {
-  UPDATE_INTERVAL: 3,
-  JOYSTICK_RADIUS: 45
-};
